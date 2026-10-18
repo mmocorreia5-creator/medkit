@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="format-detection" content="telephone=no">
+<title>MedKit Beira-Leito</title>
+<meta name="theme-color" content="#1c3f52">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MedKit">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: app de bolso — tela inicial em grade de módulos, módulos abrem em tela cheia com barra de navegação inferior fixa. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#14222b; --muted:#60717c; --line:#dde4e8;
+  --accent:#e8702a; --accent-soft:#fdeadd; --ink:#1c3f52;
+  --ok:#25804f; --ok-soft:#dff3e7; --warn:#a4620c; --warn-soft:#fdeed3; --bad:#b83330; --bad-soft:#fbe3e2;
+  --t1:#2e8b57; --t2:#1c3f52; --t3:#e8702a; --t4:#4a47a3; --t5:#2b7fb8; --t6:#c9302c; --t7:#e3b020; --t8:#5a6f7a;
+  --font-display:"Sora","IBM Plex Sans",system-ui,sans-serif;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1519; --surface:#172127; --fg:#e7edf0; --muted:#97a7b1; --line:#2a373f;
+  --accent:#f1894a; --accent-soft:#3a2416; --ink:#8fc2dd;
+  --ok:#5fcf8c; --ok-soft:#14321f; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f07a78; --bad-soft:#3f1d1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1519; --surface:#172127; --fg:#e7edf0; --muted:#97a7b1; --line:#2a373f;
+  --accent:#f1894a; --accent-soft:#3a2416; --ink:#8fc2dd;
+  --ok:#5fcf8c; --ok-soft:#14321f; --warn:#f0b35a; --warn-soft:#3a2a12; --bad:#f07a78; --bad-soft:#3f1d1c; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.screen{display:none;flex:1;padding-block:14px 92px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.screen.active{display:block}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.topbar h1{font:700 1.2rem var(--font-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.topbar .sub{font-size:.78rem;color:var(--muted)}
+.back{border:0;background:var(--surface);border:1px solid var(--line);width:38px;height:38px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--fg);flex:none}
+.search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:10px 16px;color:var(--muted);font-size:.95rem;margin-bottom:16px}
+.search input{border:0;background:transparent;flex:1;font:inherit;color:var(--fg);min-width:0}
+.search input:focus{outline:none}
+.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.brand h1{font:700 1.3rem var(--font-display);margin:0}
+.brand h1 em{font-style:normal;color:var(--accent)}
+.brand small{color:var(--muted);font-size:.75rem;display:block}
+.hero{background:linear-gradient(135deg,var(--ink),#0b2230);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:20px;font-family:var(--font-display)}
+.hero b{font-size:1.05rem;display:block}
+.hero span{font:400 .8rem var(--font-ui);opacity:.85}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin-bottom:22px}
+@media (max-width:360px){.grid{grid-template-columns:repeat(3,1fr)}}
+.tile{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;color:var(--fg);font:500 .72rem var(--font-ui);text-align:center;line-height:1.2}
+.tile .ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.tile .ic svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile:focus-visible .ic{outline:2px solid var(--accent);outline-offset:2px}
+.tile.soon{opacity:.55}
+.sec{font:600 .72rem var(--font-ui);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px}
+.field label b{color:var(--fg);font-weight:600}
+.field input,.field select{width:100%;font:500 1rem var(--font-mono);padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-variant-numeric:tabular-nums}
+.field select{font-family:var(--font-ui);font-size:.9rem}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button.btn{font:600 .9rem var(--font-ui);padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.btn.ghost{background:transparent}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:.76rem;color:var(--muted);margin:8px 0 0}
+.pill{display:inline-flex;align-items:center;font-size:.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+/* stepper */
+.stepper{display:flex;gap:6px;margin:4px 0 14px}
+.stepper i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.stepper i.done{background:var(--accent)}
+.step{display:none}
+.step.active{display:block}
+.step h2{font:600 1.05rem var(--font-display);margin:0 0 4px;text-wrap:balance}
+.step .lead{font-size:.8rem;color:var(--muted);margin:0 0 12px}
+.big{font:600 1.6rem var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.result{border-left:4px solid var(--accent);padding:10px 12px;background:var(--bg);border-radius:0 10px 10px 0;margin:10px 0}
+.result.ok{border-left-color:var(--ok)}.result.warn{border-left-color:var(--warn)}.result.bad{border-left-color:var(--bad)}
+.result b{display:block;font-size:1rem}
+.result span{font-size:.85rem;color:var(--muted)}
+.formula{font:500 .8rem var(--font-mono);color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+.list{margin:0;padding-left:18px;font-size:.88rem}
+.list li{margin-bottom:6px}
+.nav{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
+.rows{display:grid;gap:4px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:0}
+.row .k{min-width:0;font-size:.88rem}.row .k span{display:block;font-size:.72rem;color:var(--muted)}
+.row .v{font:600 .95rem var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.v.ok{color:var(--ok)}.v.warn{color:var(--warn)}.v.bad{color:var(--bad)}
+.item{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;color:var(--fg);font:inherit;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.item b{font-weight:600}.item span{display:block;font-size:.76rem;color:var(--muted)}
+.item::after{content:"›";font-size:1.3rem;color:var(--muted)}
+.check{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
+.check:last-child{border-bottom:0}
+.check input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.check em{font-style:normal;color:var(--muted);font-size:.78rem;margin-left:auto;font-family:var(--font-mono)}
+.tabnav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:9}
+.tabnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font:500 .68rem var(--font-ui);color:var(--muted);cursor:pointer;padding:2px 8px}
+.tabnav button.on{color:var(--accent)}
+.tabnav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.note{font-size:.76rem;color:var(--muted);margin-top:12px}
+/* gasometria fácil */
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:600 .82rem var(--font-ui);padding:8px 4px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.seg.sub button.on{background:var(--teal,#2a9d8f)}
+:root{--teal:#2a9d8f;--g1:#f7a65c;--g2:#4fb3a9;--g3:#f0c060;--g4:#9aa8b0}
+.gtab,.ggtab{display:none}.gtab.active,.ggtab.active{display:block}
+.grp{border-width:1.5px}.grp.g1{border-color:var(--g1)}.grp.g2{border-color:var(--g2)}.grp.g3{border-color:var(--g3)}.grp.g4{border-color:var(--g4)}
+.gt{display:flex;align-items:center;gap:8px;font:600 .9rem var(--font-ui);margin:0 0 10px}.gt small{font-weight:400;color:var(--muted)}
+.num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:700 .72rem var(--font-ui);flex:none}
+.g2 .num{background:var(--g2)}.g3 .num{background:var(--g3)}.g4 .num{background:var(--g4)}
+.field small{display:block;font-size:.68rem;color:var(--muted);margin-top:2px}
+.field textarea{width:100%;font:inherit;font-size:.9rem;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);resize:vertical}
+.field textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.field input[type=file]{font-family:var(--font-ui);font-size:.85rem}
+.btn.wide{width:100%;padding:12px;font-size:1rem}
+.panel h3{font:600 .98rem var(--font-display);margin:0 0 6px}.panel p{margin:0 0 8px;font-size:.88rem}
+.box{border-radius:9px;padding:9px 11px;font-size:.84rem;margin:8px 0;border:1px solid transparent;line-height:1.45}
+.box.r{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}.box.b{background:#e3f0fb;border-color:#b5d4f1;color:#13222b}.box.g{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}.box.y{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .box.b{background:#15293a;border-color:#27496a;color:var(--fg)}}
+:root[data-theme="dark"] .box.b{background:#15293a;border-color:#27496a;color:var(--fg)}
+.r{color:var(--bad);font-weight:700}.bl{color:#2b7fb8;font-weight:700}
+.card-b{border-left:4px solid #2b7fb8}.card-t{border-left:4px solid var(--teal)}.card-p{border-left:4px solid #7b61c9}.card-g{border-left:4px solid var(--ok)}.card-y{border-left:4px solid var(--warn)}.card-r{border-left:4px solid var(--bad)}
+.stp{display:flex;gap:10px;margin:12px 0;padding-top:12px;border-top:1px dashed var(--line)}.stp>div{min-width:0;flex:1}.stp .num{background:#7b61c9;margin-top:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.two .box{margin:6px 0}
+@media (max-width:380px){.two{grid-template-columns:1fr}}
+.verdict{border-radius:12px;padding:14px;margin:12px 0;color:#fff;background:var(--ink)}.verdict.bad{background:#9b2c2a}.verdict.warn{background:#9a5b0a}.verdict.ok{background:#1f6b45}
+.verdict .dxt{font:700 1.1rem var(--font-display);text-wrap:balance}.verdict .dxs{font:500 .8rem var(--font-mono);opacity:.9;margin-top:4px}
+.histitem{width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;color:var(--fg);font:inherit}
+.histitem b{display:block;font-size:.9rem}.histitem span{font-size:.74rem;color:var(--muted)}
+.rx{font:500 .82rem var(--font-mono);background:var(--bg);border:1px dashed var(--line);border-radius:9px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;margin:10px 0 0}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.md{font-size:.9rem;line-height:1.5;white-space:pre-wrap}.md h4{margin:12px 0 4px;font:600 .95rem var(--font-display)}
+/* rsi / interações */
+.it-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}.it-row input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1.5px dashed var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.it-row input:focus{outline:2px solid var(--accent);border-style:solid}
+.it-row button{width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:#fff;font:700 1.2rem var(--font-ui);cursor:pointer;flex:none}
+.sev{display:inline-block;font:700 .7rem var(--font-ui);text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px}
+.sev.grave{background:var(--bad-soft);color:var(--bad)}.sev.moderada{background:var(--warn-soft);color:var(--warn)}.sev.leve{background:var(--ok-soft);color:var(--ok)}
+.itx{border-left:4px solid var(--line);padding-left:12px;margin:10px 0}.itx.grave{border-left-color:var(--bad)}.itx.moderada{border-left-color:var(--warn)}.itx.leve{border-left-color:var(--ok)}
+.itx b{display:block;margin-bottom:2px}.itx p{margin:4px 0;font-size:.85rem}
+.rsi-g .gt{margin-bottom:6px}
+.dose-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}.dose-line:last-child{border-bottom:0}
+.dose-line .k{font-size:.88rem}.dose-line .k span{display:block;font-size:.72rem;color:var(--muted)}
+.dose-line .v{font:700 1rem var(--font-mono);white-space:nowrap}.dose-line .v small{display:block;font:500 .7rem var(--font-mono);color:var(--muted);text-align:right}
+.timeline .stp{border-top:0;padding-top:0}.timeline .tm{font:600 .72rem var(--font-mono);color:var(--accent);white-space:nowrap;min-width:52px}
+/* scores / critérios / semiologia */
+.item .tag{font-size:.68rem;color:var(--accent);font-weight:600;margin-left:6px}
+.sc-field{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.88rem}
+.sc-field input{width:100%;font:500 1rem var(--font-mono);padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.sc-group{margin-top:12px}.sc-group .sec{margin-bottom:4px}
+.badge-ok{color:var(--ok)}.badge-warn{color:var(--warn)}.badge-bad{color:var(--bad)}
+/* antimicrobiano / reanimação */
+.gcard{display:flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px;cursor:pointer;width:100%;text-align:left;padding:0;color:var(--fg);font:inherit}
+.gcard .ic{width:64px;align-self:stretch;display:grid;place-items:center;color:#fff;font-size:1.4rem}
+.gcard b{flex:1;padding:16px 14px;font:600 1.05rem var(--font-display)}
+.gcard .bar{width:10px;align-self:stretch}
+.abx-sec{margin:10px 0}.abx-sec .sec{margin-bottom:4px}
+.rhythm{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rhythm button{padding:14px 8px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);font:700 .95rem var(--font-display);cursor:pointer}
+.rhythm .r-shock{border-color:var(--bad);color:var(--bad)}.rhythm .r-non{border-color:#2b7fb8;color:#2b7fb8}
+.rcp-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:var(--ink);color:#fff;border-radius:12px;padding:12px;margin-bottom:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.rcp-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;opacity:.8}.rcp-big{font:700 1.6rem var(--font-mono);font-variant-numeric:tabular-nums}.rcp-mid{font:700 1rem var(--font-display);margin-top:4px}
+.rcp-head.warn{background:#9a5b0a}.rcp-head.due{background:#9b2c2a}
+.rcp-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.rcp-btns .btn{padding:12px 8px;font-size:.88rem}.rcp-btns .btn span{display:block;font:500 .72rem var(--font-mono);opacity:.85}
+.rcp-log{font:500 .8rem var(--font-mono);max-height:220px;overflow:auto}.rcp-log div{padding:3px 0;border-bottom:1px dashed var(--line)}
+/* doses pediátricas */
+.wbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:10px;padding:10px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.wbar label{font-weight:600}
+.wbar input{width:90px;font:600 1.1rem var(--font-mono);padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--fg);text-align:center}
+.wbar input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.wbar .pill{margin-left:auto}
+.pres{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.pres h3{font:600 .92rem var(--font-ui);margin:0 0 8px;text-wrap:balance}
+.pres .dose{font-size:.92rem;line-height:1.5}
+.pres .dose mark{background:#f6c445;color:#1a1a1a;font:600 .95rem var(--font-mono);padding:2px 7px;border-radius:5px;white-space:nowrap}
+.pres .dose mark.cap{background:var(--bad-soft);color:var(--bad)}
+.pres ul{margin:6px 0 0;padding-left:18px;font-size:.82rem;color:var(--muted)}
+.pres ul li{margin-bottom:3px}
+.pres .fx{font-size:.88rem;line-height:1.5}
+.obs{margin:0;padding:0;list-style:none}
+.obs li{position:relative;padding:6px 0 6px 26px;font-size:.88rem;border-bottom:1px dashed var(--line)}
+.obs li:last-child{border-bottom:0}
+.obs li::before{content:"!";position:absolute;left:0;top:7px;width:18px;height:18px;border-radius:50%;border:2px solid var(--bad);color:var(--bad);font:700 .7rem/14px var(--font-ui);text-align:center}
+.cat{font:600 .72rem var(--font-ui);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 6px}
+.cat:first-child{margin-top:0}
+@media (prefers-reduced-motion:no-preference){.step.active{animation:in .2s ease}}
+@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.gcard .cnt{font-size:.78rem;color:var(--muted);padding-right:12px;font-weight:500}
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem}.tbl td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.tbl td:first-child{font-weight:600;white-space:nowrap;width:34%;color:var(--accent)}
+.proto ol{margin:4px 0 0 18px;padding:0;font-size:.86rem;line-height:1.5}.proto li{margin-bottom:6px}
+.pa-bar{display:flex;gap:4px;margin:10px 0}.pa-bar span{flex:1;height:8px;border-radius:4px;background:var(--line)}.pa-bar span.on{background:var(--accent)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:7px 12px;font:500 .8rem var(--font-ui);cursor:pointer;white-space:nowrap}
+.chip b{font-weight:600;color:var(--muted)}.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}.chip.on b{color:#fff}
+.rxrow{display:flex;align-items:stretch;gap:6px;margin-bottom:8px}.rxrow .item{margin-bottom:0;flex:1}.rxrow .item b{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.star{flex:none;width:44px;border:1px solid var(--line);background:var(--surface);border-radius:12px;color:var(--line);font-size:1.3rem;cursor:pointer}.star.on{color:#f0b429;border-color:#f0b429}
+.rxcount{font-size:.76rem;color:var(--muted);margin:0 0 8px}
+.rxhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-6px 0 12px}
+.cidchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font:600 .76rem var(--font-mono);color:var(--accent);cursor:pointer}
+.spchip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+.rxol,.rxul{margin:0 0 0 18px;padding:0;font-size:.88rem;line-height:1.55}.rxol li,.rxul li{margin-bottom:7px}
+mark.dose{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--fg);font-weight:600;padding:0 4px;border-radius:4px}.dose-sub{font-size:.78em;color:var(--muted)}
+.rx-paper{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:12px 12px 6px;font-family:var(--font-mono);font-size:.8rem;line-height:1.45}
+.rx-via{font-weight:700;letter-spacing:.06em;margin:10px 0 6px;color:var(--accent)}.rx-via:first-child{margin-top:0}
+.rx-it{margin-bottom:9px}.rx-l1{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.rx-n{flex:none;font-weight:700}.rx-drug{flex:1 1 70%}.rx-dots{flex:1 1 24px;border-bottom:1px dotted var(--muted);min-width:24px;transform:translateY(-4px)}.rx-qty{flex:0 0 auto;white-space:nowrap;margin-left:auto}
+.rx-pos{padding-left:22px;color:var(--muted)}
+.topbar .favbtn{margin-left:auto;background:none;border:0;font-size:1.5rem;color:var(--line);cursor:pointer;padding:4px 8px}.topbar .favbtn.on{color:#f0b429}
+#rxo-seg button{font-size:.76rem;padding-left:2px;padding-right:2px}
+.rxq li{font-size:.95rem;margin-bottom:10px}.rxmore summary{cursor:pointer;font:600 .8rem var(--font-ui);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.rxmore[open] summary{margin-bottom:8px}
+.nt-ta{width:100%;min-height:60vh;font:500 .86rem var(--font-mono);line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);resize:vertical}.nt-ta:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+
+/* ---- login / assinatura / conta ---- */
+.auth{padding-bottom:24px}
+.auth-wrap{max-width:420px;margin:0 auto;padding-top:28px}
+.auth-logo{width:96px;height:96px;margin:0 auto 14px;filter:drop-shadow(0 8px 20px rgba(28,63,82,.25))}.auth-logo.small{width:64px;height:64px}
+.auth-logo svg{width:100%;height:100%;display:block}
+.auth-title{font-family:var(--font-display);font-size:1.9rem;font-weight:700;text-align:center;margin:0;letter-spacing:-.02em}.auth-title em{font-style:normal;color:var(--accent)}
+.auth-sub{text-align:center;color:var(--muted);margin:4px 0 16px;font-size:.92rem}
+.link{background:none;border:0;color:var(--ink);font:inherit;font-weight:600;text-decoration:underline;padding:8px 0;cursor:pointer}.link.inline{padding:0;font-size:inherit}
+.pay-card{border:2px solid var(--accent-soft)}
+.pay-price{display:flex;align-items:baseline;gap:4px;margin:4px 0 10px}.pay-price b{font-family:var(--font-display);font-size:2.1rem;color:var(--ink)}.pay-price span{color:var(--muted)}
+.list.tight li{padding:4px 0}
+.acct{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 10px 6px 8px;font:inherit;font-size:.78rem;font-weight:600;cursor:pointer}.acct svg{width:18px;height:18px}
+body.locked .tabnav{display:none}
+.ai-status{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:10px;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.ai-status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bad);flex:none}.ai-status.ok::before{background:var(--ok)}
+.thumbs .pdf{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:10px;background:var(--bad-soft);color:var(--bad);font-weight:700;font-size:.8rem}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+
+<!-- INÍCIO -->
+<section class="screen active" id="s-home">
+  <div class="brand"><h1>Med<em>Kit</em><small>Ferramentas de beira-leito</small></h1><button class="acct" id="acct-btn" data-go="s-account" aria-label="Minha conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span id="acct-lbl">Conta</span></button></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Buscar ferramenta" aria-label="Buscar ferramenta"></label>
+  <div class="hero"><b>Gasometria Fácil</b><span>5 passos, da acidemia à correção do distúrbio.</span></div>
+  <p class="sec">Módulos</p>
+  <div class="grid" id="grid"></div>
+  <p class="note">Apoio ao raciocínio clínico. Confirme doses e condutas com protocolos do serviço.</p>
+</section>
+
+<!-- GASOMETRIA -->
+<section class="screen" id="s-gaso">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Gasometria Fácil</h1><div class="sub">Interpretação em 5 passos</div></div></div>
+  <div class="seg" id="g-seg"><button class="on" data-tab="g-calc" aria-label="Calculadora">&#9679; Calcular</button><button data-tab="g-guia" aria-label="Guia">&#9776; Guia</button><button data-tab="g-hist" aria-label="Histórico">&#8635; Histórico</button></div>
+
+  <div class="gtab active" id="g-calc">
+    <div class="panel"><p class="sec">Identificação do paciente <small>(opcional)</small></p><div class="field"><input id="g-id" placeholder="Nome ou ID do paciente"></div></div>
+    <div class="panel grp g1"><p class="gt"><span class="num">1</span>Parâmetros principais <small>*</small></p>
+      <div class="fields">
+        <div class="field"><label for="ph">pH *</label><input id="ph" type="number" step="0.01" placeholder="7,40" inputmode="decimal"><small>Ref: 7,35–7,45</small></div>
+        <div class="field"><label for="pco2">PaCO₂ *</label><input id="pco2" type="number" step="0.1" placeholder="40" inputmode="decimal"><small>Ref: 35–45 mmHg</small></div>
+        <div class="field"><label for="hco3">HCO₃⁻</label><input id="hco3" type="number" step="0.1" placeholder="24" inputmode="decimal"><small>Ref: 22–26 mEq/L</small></div>
+        <div class="field"><label for="be">Base Excess (BE)</label><input id="be" type="number" step="0.1" placeholder="0" inputmode="decimal"><small>Ref: −3 a +3 mEq/L</small></div>
+      </div></div>
+    <div class="panel grp g2"><p class="gt"><span class="num">2</span>Oxigenação <small>(opcional)</small></p>
+      <div class="fields">
+        <div class="field"><label for="po2">PaO₂</label><input id="po2" type="number" placeholder="90" inputmode="decimal"><small>Ref: 80–100 mmHg</small></div>
+        <div class="field"><label for="fio2">FiO₂</label><input id="fio2" type="number" step="0.01" placeholder="0,21" inputmode="decimal"><small>0,21 em ar ambiente</small></div>
+        <div class="field"><label for="sat">SatO₂ %</label><input id="sat" type="number" placeholder="97" inputmode="decimal"><small>Ref: 95–100%</small></div>
+      </div></div>
+    <div class="panel grp g3"><p class="gt"><span class="num">3</span>Eletrólitos <small>(opcional)</small></p>
+      <div class="fields">
+        <div class="field"><label for="na">Sódio (Na⁺)</label><input id="na" type="number" placeholder="140" inputmode="decimal"><small>Ref: 135–145 mEq/L</small></div>
+        <div class="field"><label for="cl">Cloro (Cl⁻)</label><input id="cl" type="number" placeholder="100" inputmode="decimal"><small>Ref: 95–105 mEq/L</small></div>
+        <div class="field"><label for="k">Potássio (K⁺)</label><input id="k" type="number" step="0.1" placeholder="4,0" inputmode="decimal"><small>Ref: 3,5–5,0 mEq/L</small></div>
+      </div></div>
+    <div class="panel grp g4"><p class="gt"><span class="num">4</span>Parâmetros adicionais <small>(opcional)</small></p>
+      <div class="fields">
+        <div class="field"><label for="lac">Lactato</label><input id="lac" type="number" step="0.1" placeholder="1,0" inputmode="decimal"><small>Ref: &lt; 2,0 mmol/L</small></div>
+        <div class="field"><label for="alb">Albumina</label><input id="alb" type="number" step="0.1" placeholder="4,0" inputmode="decimal"><small>Ref: 3,5–5,0 g/dL</small></div>
+        <div class="field"><label for="gli">Glicemia</label><input id="gli" type="number" placeholder="90" inputmode="decimal"><small>mg/dL</small></div>
+      </div></div>
+    <div class="panel"><p class="sec">Notas clínicas <small>(opcional)</small></p><div class="field"><textarea id="g-notes" rows="2" maxlength="250" placeholder="Contexto clínico, sintomas, história do paciente…"></textarea></div></div>
+    <button class="btn primary wide" id="g-run">&#9998; Interpretar gasometria</button>
+    <div class="actions"><button class="btn" data-ex="1">Ex.: cetoacidose</button><button class="btn" data-ex="2">Ex.: DPOC</button><button class="btn" data-ex="3">Ex.: vômitos</button><button class="btn ghost" id="g-clear">Limpar</button></div>
+    <div id="g-result"></div>
+  </div>
+
+  <div class="gtab" id="g-guia">
+    <div class="seg sub" id="g-gseg"><button class="on" data-gtab="gg-conc">Conceitos</button><button data-gtab="gg-5">5 Passos</button><button data-gtab="gg-dist">Distúrbios</button></div>
+    <div class="ggtab active" id="gg-conc">
+      <div class="panel card-b"><h3>1. O que é pH?</h3><p>O pH representa o potencial hidrogeniônico: a concentração de íons H⁺. Quanto maior a concentração de H⁺, mais ácida a solução.</p><div class="box b"><b>No sangue o pH normal é levemente básico, entre 7,35 e 7,45</b><br>• pH &lt; 7,35 = <span class="r">ACIDEMIA</span><br>• pH &gt; 7,45 = <span class="bl">ALCALEMIA</span></div></div>
+      <div class="panel card-t"><h3>2. Sistema tampão bicarbonato-CO₂</h3><p>Soluções tampão mantêm o pH praticamente constante apesar da adição de ácidos ou bases. No sangue o tampão principal é formado por bicarbonato e CO₂.</p><div class="formula">H⁺ + HCO₃⁻ ⇌ H₂CO₃ ⇌ CO₂ + H₂O</div><div class="box r"><b>Se adicionar H⁺ (ácido):</b> o HCO₃⁻ consome o H⁺, deslocando a reação para a direita e formando mais CO₂ (eliminado pelo pulmão).</div><div class="box b"><b>Se adicionar OH⁻ (base):</b> o H₂CO₃ forma novos H⁺ pelo deslocamento da reação à esquerda.</div></div>
+      <div class="panel card-p"><h3>3. Mecanismos de compensação</h3><p>O organismo compensa os distúrbios ácido-base por dois mecanismos.</p>
+        <p class="sec">A) Compensação respiratória (rápida — minutos)</p>
+        <div class="box r"><b>Acidose metabólica:</b> pH baixo → estímulo respiratório → <b>hiperventilação</b>. Resultado: ↓ CO₂ evita queda maior do pH.</div>
+        <div class="box b"><b>Alcalose metabólica:</b> pH alto → depressão respiratória → <b>hipoventilação</b>. Resultado: ↑ CO₂ evita aumento maior do pH.</div>
+        <p class="sec">B) Compensação metabólica / renal (lenta — ~3 dias)</p>
+        <div class="box r"><b>Acidose respiratória:</b> ↑ CO₂ → rins retêm HCO₃⁻. Leva ~3 dias para ocorrer.</div>
+        <div class="box b"><b>Alcalose respiratória:</b> ↓ CO₂ → rins eliminam HCO₃⁻ e retêm H⁺. Leva ~3 dias.</div></div>
+      <div class="panel card-g"><h3>Valores de referência</h3><div class="rows">
+        <div class="row"><div class="k">pH</div><div class="v">7,35–7,45</div></div><div class="row"><div class="k">PaCO₂</div><div class="v">35–45 mmHg</div></div><div class="row"><div class="k">HCO₃⁻</div><div class="v">22–26 mEq/L</div></div><div class="row"><div class="k">BE</div><div class="v">−3 a +3</div></div><div class="row"><div class="k">PaO₂</div><div class="v">80–100 mmHg</div></div><div class="row"><div class="k">Na⁺</div><div class="v">135–145</div></div><div class="row"><div class="k">Cl⁻</div><div class="v">95–105</div></div><div class="row"><div class="k">Ânion gap</div><div class="v">8–12</div></div><div class="row"><div class="k">Albumina</div><div class="v">3,5–5,0 g/dL</div></div><div class="row"><div class="k">Lactato</div><div class="v">&lt; 2,0 mmol/L</div></div></div>
+        <div class="box y" style="margin-top:10px"><b>Sobre o HCO₃⁻:</b> há o HCO₃⁻ "atual" (medido) e o "padrão" (calculado assumindo PaCO₂ = 40). Prefira o padrão: reflete melhor o componente metabólico.</div></div>
+      <div class="panel card-y"><h3>Correção do ânion gap pela albumina</h3><p><b>Por que a albumina importa?</b> Tem carga negativa e é o principal ânion não medido do plasma — grande parte do AG normal vem dela.</p><div class="box r"><b>Hipoalbuminemia:</b> o AG parece artificialmente normal mesmo com acúmulo real de ácidos. <b>Isso pode mascarar uma acidose metabólica.</b></div><div class="formula">AG corrigido = AG + 2,5 × (4,0 − albumina)</div><p class="hint">2,5: queda do AG por 1 g/dL de albumina · 4,0 g/dL: valor de referência. Sempre corrija quando albumina &lt; 3,5 g/dL.</p></div>
+    </div>
+    <div class="ggtab" id="gg-5">
+      <div class="panel card-p"><h3>Método sistemático dos 5 passos</h3>
+        <div class="stp"><span class="num">1</span><div><b>Determinar se é acidose ou alcalose</b><div class="two"><div class="box r">pH &lt; 7,35 = <b>ACIDOSE</b></div><div class="box b">pH &gt; 7,45 = <b>ALCALOSE</b></div></div></div></div>
+        <div class="stp"><span class="num">2</span><div><b>Avaliar quem é o responsável pelo distúrbio</b><div class="box r"><b>Se ACIDOSE (pH &lt; 7,35):</b><br>• ↑ PaCO₂ (&gt; 45) → acidose respiratória<br>• ↓ HCO₃⁻ (&lt; 22) → acidose metabólica</div><div class="box b"><b>Se ALCALOSE (pH &gt; 7,45):</b><br>• ↓ PaCO₂ (&lt; 35) → alcalose respiratória<br>• ↑ HCO₃⁻ (&gt; 26) → alcalose metabólica</div></div></div>
+        <div class="stp"><span class="num">3</span><div><b>Se respiratório: avaliar se é agudo ou crônico</b><p class="hint">A compensação renal leva ~3 dias; o BE ajuda a determinar a cronicidade.</p><div class="two"><div class="box g"><b>AGUDO:</b> BE normal (−3 a +3). Sem tempo para compensação renal.</div><div class="box y"><b>CRÔNICO:</b> BE alterado. Compensação renal já ocorreu.</div></div></div></div>
+        <div class="stp"><span class="num">4</span><div><b>Calcular a resposta compensatória esperada</b><p class="hint">Se a compensação está adequada, o distúrbio é PURO; se não, há outro distúrbio associado (MISTO).</p>
+          <div class="box r"><b>Acidose metabólica:</b> PaCO₂ esperada = 1,5 × HCO₃⁻ + 8 (± 2)<br>✓ medido dentro do esperado → acidose metabólica pura<br>⚠ PaCO₂ &gt; esperado → acidose respiratória associada<br>⚠ PaCO₂ &lt; esperado → alcalose respiratória associada</div>
+          <div class="box b"><b>Alcalose metabólica:</b> PaCO₂ esperada = 0,7 × HCO₃⁻ + 21 (± 2) (aprox. HCO₃⁻ + 15)</div>
+          <div class="box y"><b>Acidose respiratória:</b> aguda → HCO₃⁻ sobe 1 mEq/L a cada 10 mmHg de ↑ PaCO₂; crônica → sobe 3,5 mEq/L a cada 10 mmHg</div>
+          <div class="box g"><b>Alcalose respiratória:</b> aguda → HCO₃⁻ cai 2 mEq/L a cada 10 mmHg de ↓ PaCO₂; crônica → cai 5 mEq/L a cada 10 mmHg</div></div></div>
+        <div class="stp"><span class="num">5</span><div><b>Calcular ânion gap e relação delta (se acidose metabólica)</b>
+          <div class="formula">AG = Na⁺ − (Cl⁻ + HCO₃⁻) · normal 8–12 mEq/L</div><p class="hint">Se albumina &lt; 3,5 g/dL: AG corrigido = AG + 2,5 × (4,0 − albumina)</p>
+          <div class="formula">Δ/Δ = (AG − 12) / (24 − HCO₃⁻)</div>
+          <div class="box g">✓ Relação 1–2: acidose metabólica com AG aumentado PURA</div><div class="box r">⚠ Relação &lt; 1: acidose com AG normal (hiperclorêmica) associada</div><div class="box b">⚠ Relação &gt; 2: alcalose metabólica associada</div>
+          <p class="hint">Conceito: quando há acúmulo de ácido (lactato, cetoácidos), ele consome bicarbonato na proporção 1:1. Se a proporção foge do esperado, há outro distúrbio metabólico coexistindo.</p></div></div></div>
+    </div>
+    <div class="ggtab" id="gg-dist">
+      <div class="panel card-r"><h3>Acidose metabólica</h3><div class="formula">AG = Na⁺ − (Cl⁻ + HCO₃⁻) · normal 8–12</div>
+        <div class="box r"><b>AG aumentado (&gt; 12)</b> — acúmulo de ácidos (GOLD MARK): acidose láctica, cetoacidose, uremia, intoxicações (metanol, etilenoglicol, salicilato, metformina).</div>
+        <div class="box y"><b>AG normal (8–12)</b> — perda de bicarbonato (hiperclorêmica): diarreia, acidose tubular renal, fístulas, excesso de SF 0,9%, acetazolamida.</div>
+        <p class="sec">Como corrigir</p><ol class="list"><li><b>Trate a causa</b>: volume e antibiótico na sepse; insulina + volume + K⁺ na cetoacidose; suspender metformina; diálise na uremia e nas intoxicações por metanol/etilenoglicol/salicilato; fomepizol nos glicóis.</li><li><b>Bicarbonato de sódio 8,4%</b> (1 mEq/mL) só se pH &lt; 7,10–7,15 com instabilidade, ou lesão renal aguda com pH &lt; 7,20. Dose: déficit = 0,3 × peso × (BE); repor metade (ou 1 mEq/kg) em 30–60 min e reavaliar gasometria. Nunca em bolus na cetoacidose/láctica sem instabilidade.</li><li><b>AG normal</b>: trocar SF por solução balanceada (Ringer lactato), repor K⁺; na ATR, bicarbonato ou citrato oral 1–3 mEq/kg/dia.</li><li><b>Potássio</b>: a correção da acidose desloca K⁺ para dentro da célula — repor antes/durante se K⁺ &lt; 4,0; cuidado se hipercalemia inicial.</li><li>Reavaliar gasometria e eletrólitos a cada 2–4 h; meta pH &gt; 7,20 e HCO₃⁻ &gt; 10–12.</li></ol></div>
+      <div class="panel card-b"><h3>Alcalose metabólica</h3><div class="box b"><b>Cloreto-responsiva (Cl⁻ urinário &lt; 20):</b> vômitos, sonda nasogástrica, diuréticos (fase tardia), pós-hipercapnia.</div><div class="box y"><b>Cloreto-resistente (Cl⁻ urinário &gt; 20):</b> hiperaldosteronismo, Cushing, Bartter/Gitelman, hipocalemia grave, diurético em uso.</div>
+        <p class="sec">Como corrigir</p><ol class="list"><li><b>Cloreto-responsiva</b>: SF 0,9% (repõe Cl⁻ e volume) + KCl 19,1% (20–40 mEq/L no soro; até 10–20 mEq/h); suspender diurético; IBP ou antiemético se perda gástrica.</li><li><b>Cloreto-resistente</b>: repor K⁺ e Mg²⁺; espironolactona 25–100 mg/dia ou amilorida; tratar causa endócrina.</li><li><b>Hipervolemia</b> (pós-diurético, ICC): acetazolamida 250–500 mg VO/EV 1–2×/dia.</li><li><b>Refratária com pH &gt; 7,55–7,60</b>: HCl 0,1 N em veia central ou hemodiálise com banho pobre em bicarbonato.</li><li>Meta: pH &lt; 7,50; monitorar K⁺, Mg²⁺, Ca²⁺ iônico e ECG.</li></ol></div>
+      <div class="panel card-y"><h3>Acidose respiratória</h3><div class="box y"><b>Hipoventilação:</b> DPOC exacerbado, asma grave (fadiga), depressão do SNC (opioide, benzodiazepínico), doença neuromuscular, obesidade-hipoventilação, obstrução de via aérea, ventilação mecânica inadequada.</div>
+        <p class="sec">Como corrigir</p><ol class="list"><li><b>Via aérea e ventilação</b>: avaliar consciência, aspirar, posicionar; naloxona 0,4 mg EV ou flumazenil 0,2 mg se intoxicação.</li><li><b>VNI (BiPAP)</b> na DPOC exacerbado com pH 7,25–7,35 e PaCO₂ &gt; 45: IPAP 10–14, EPAP 4–6 cmH₂O, reavaliar em 1–2 h.</li><li><b>Intubação</b> se pH &lt; 7,25, rebaixamento, instabilidade ou falha da VNI; na VM corrigir a PaCO₂ lentamente (≤ 10 mmHg/h) se crônica.</li><li>Broncodilatador + corticoide no broncoespasmo; O₂ com alvo SatO₂ 88–92% em retentores.</li><li><b>Não usar bicarbonato</b> (gera mais CO₂); corrigir hipofosfatemia e hipomagnesemia que pioram a fadiga muscular.</li></ol></div>
+      <div class="panel card-g"><h3>Alcalose respiratória</h3><div class="box g"><b>Hiperventilação:</b> dor, ansiedade, sepse precoce, TEP, pneumonia, hipoxemia, salicilato, gestação, hepatopatia, lesão do SNC, ventilação mecânica excessiva.</div>
+        <p class="sec">Como corrigir</p><ol class="list"><li>Tratar a causa: analgesia, O₂ se hipoxemia, antibiótico na sepse, anticoagulação no TEP; afastar TEP e sepse antes de atribuir à ansiedade.</li><li>Na ventilação mecânica: reduzir frequência respiratória ou volume corrente.</li><li>Sintomas de hipocalcemia iônica (parestesia, tetania): resolvem com a correção; evitar reinalação em saco (hipoxemia).</li><li>Intoxicação por salicilato: alcalinizar urina com bicarbonato; diálise se grave.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="gtab" id="g-hist"><div class="panel"><p class="sec">&#8635; Histórico</p><div id="g-histlist"></div></div></div>
+</section>
+
+<!-- EXAMES / LAUDO IA -->
+<section class="screen" id="s-exam">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Laudo de exames com IA</h1><div class="sub">ECG, radiografia, TC, USG, laboratório — foto ou PDF</div></div></div>
+  <div class="panel">
+    <div class="ai-status" id="ex-prov">—</div>
+    <div class="fields">
+      <div class="field"><label for="ex-type">Tipo de exame</label><select id="ex-type"><option>ECG</option><option>Radiografia de tórax</option><option>Radiografia (outra)</option><option>Ultrassonografia</option><option>Tomografia</option><option>Ressonância</option><option>Exame laboratorial</option><option>Outro</option></select></div>
+      <div class="field"><label for="ex-mode">Formato da resposta</label><select id="ex-mode"><option value="laudo">Laudo estruturado</option><option value="interp">Interpretação clínica</option></select></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label for="ex-ctx">Contexto clínico</label><input id="ex-ctx" placeholder="idade, sexo, queixa, comorbidades"></div>
+    <div class="field" style="margin-top:10px"><label for="ex-img">Foto ou PDF do exame (até 4 arquivos)</label><input id="ex-img" type="file" accept="image/*,application/pdf" multiple><div id="ex-thumbs" class="thumbs"></div></div>
+    <div class="field" style="margin-top:10px"><label for="ex-laudo">Texto do exame ou descrição (opcional)</label><textarea id="ex-laudo" rows="4" placeholder="Cole os valores do laboratório, o laudo prévio ou descreva o que vê…"></textarea></div>
+    <div class="actions"><button class="btn primary" id="ex-run">Gerar laudo</button><button class="btn" id="ex-stop" hidden>Parar</button></div>
+    <p class="hint" id="ex-hint">Cubra nome, CPF e prontuário do paciente antes de fotografar. O rascunho é apoio ao raciocínio: a interpretação e a assinatura são do médico.</p>
+  </div>
+  <div class="panel" id="ex-out" hidden><p class="sec">Rascunho do laudo</p><div id="ex-text" class="md"></div>
+    <div class="actions"><button class="btn primary" id="ex-copy">Copiar laudo</button><button class="btn" id="ex-note">Inserir no esqueleto ›</button></div>
+    <p class="hint">Laudo gerado com auxílio de IA — revise cada achado antes de assinar.</p></div>
+</section>
+
+<!-- CALCULADORAS -->
+<section class="screen" id="s-calc">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Calculadoras</h1><div class="sub">Fórmulas de uso diário</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="calc-q" placeholder="Busque pela calculadora" aria-label="Busque pela calculadora"></label>
+  <div id="calc-list"></div>
+</section>
+<section class="screen" id="s-calc-one">
+  <div class="topbar"><button class="back" data-go="s-calc" aria-label="Voltar">‹</button><div><h1 id="c-title"></h1><div class="sub" id="c-sub"></div></div></div>
+  <div class="panel"><div class="fields" id="c-fields"></div></div>
+  <div class="panel" id="c-out"></div>
+</section>
+
+<!-- SCORES -->
+<section class="screen" id="s-score">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Scores</h1><div class="sub">Escalas prognósticas e de triagem</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="score-q" placeholder="Busque pelo score" aria-label="Busque pelo score"></label>
+  <div id="score-list"></div>
+</section>
+<section class="screen" id="s-score-one">
+  <div class="topbar"><button class="back" data-go="s-score" aria-label="Voltar">‹</button><div><h1 id="sc-title"></h1><div class="sub" id="sc-sub"></div></div></div>
+  <div class="panel" id="sc-items"></div>
+  <div class="panel" id="sc-out"></div>
+  <p class="note" id="sc-ref"></p>
+</section>
+
+<!-- CRITÉRIOS DIAGNÓSTICOS -->
+<section class="screen" id="s-crit">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Critérios diagnósticos</h1><div class="sub">Classificação e diagnóstico</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="crit-q" placeholder="Busque pelo critério" aria-label="Busque pelo critério"></label>
+  <div id="crit-list"></div>
+</section>
+<section class="screen" id="s-crit-one">
+  <div class="topbar"><button class="back" data-go="s-crit" aria-label="Voltar">‹</button><div><h1 id="cr-title"></h1><div class="sub" id="cr-sub"></div></div></div>
+  <div id="cr-secs"></div>
+  <div class="panel" id="cr-out"></div>
+  <p class="note" id="cr-ref"></p>
+</section>
+
+<!-- SEMIOLOGIA -->
+<section class="screen" id="s-semio">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Semiologia</h1><div class="sub">Achados → diagnósticos, exames e condutas</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="sm-q" placeholder="Busque por achado, síndrome ou especialidade" aria-label="Buscar"></label>
+  <div id="sm-list"></div>
+</section>
+<section class="screen" id="s-semio-spec">
+  <div class="topbar"><button class="back" data-go="s-semio" aria-label="Voltar">‹</button><div><h1 id="sm-title"></h1><div class="sub" id="sm-sub"></div></div></div>
+  <div id="sm-topics"></div>
+</section>
+<section class="screen" id="s-semio-one">
+  <div class="topbar"><button class="back" id="sm-back" aria-label="Voltar">‹</button><div><h1 id="st-title"></h1><div class="sub" id="st-sub"></div></div></div>
+  <div class="panel card-t"><p class="sec">Sinais e semiologia</p><p id="st-s" style="font-size:.9rem"></p></div>
+  <div class="panel card-r"><p class="sec">Diagnósticos prováveis</p><ol class="list" id="st-dx"></ol></div>
+  <div class="panel card-b"><p class="sec">Exames a solicitar</p><ul class="list" id="st-ex"></ul></div>
+  <div class="panel card-g"><p class="sec">Condutas e medicações</p><ul class="list" id="st-tx"></ul></div>
+  <div class="panel card-p"><p class="sec">Diretrizes e evidência</p><p id="st-ref" style="font-size:.84rem"></p></div>
+  <p class="note">Condutas resumidas de diretrizes (SBP, SBC, FEBRASGO, MS, ESC, ACC/AHA, IDSA, NICE, Cochrane). Conferir doses, contraindicações e protocolos locais.</p>
+</section>
+
+<!-- HIDROELETROLÍTICOS -->
+<section class="screen" id="s-hidro">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Distúrbios hidroeletrolíticos</h1><div class="sub">Abordagem rápida</div></div></div>
+  <div id="hidro-list"></div>
+</section>
+<section class="screen" id="s-hidro-one">
+  <div class="topbar"><button class="back" data-go="s-hidro" aria-label="Voltar">‹</button><div><h1 id="h-title"></h1><div class="sub" id="h-sub"></div></div></div>
+  <div id="h-body"></div>
+</section>
+
+<!-- INFUSÕES -->
+<section class="screen" id="s-inf">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Infusões e drippings</h1><div class="sub">Vasoativos, sedação, bloqueadores e conversões</div></div></div>
+  <div class="seg" id="i-seg"><button class="on" data-itab="i-list">Infusões</button><button data-itab="i-conv">Conversões</button></div>
+  <div class="gtab active" id="i-list">
+    <details class="panel" id="pt-panel"><summary>Parâmetros do paciente (opcional)</summary>
+      <div class="fields" style="margin-top:10px">
+        <div class="field"><label for="pt-peso">Peso kg</label><input id="pt-peso" type="number" step="any" inputmode="decimal" placeholder="70"></div>
+        <div class="field"><label for="pt-alt">Altura cm</label><input id="pt-alt" type="number" step="any" inputmode="decimal" placeholder="170"></div>
+        <div class="field"><label for="pt-sexo">Sexo</label><select id="pt-sexo"><option value="M">M</option><option value="F">F</option></select></div>
+        <div class="field"><label for="pt-pas">PAS</label><input id="pt-pas" type="number" inputmode="decimal" placeholder="mmHg"></div>
+        <div class="field"><label for="pt-pad">PAD</label><input id="pt-pad" type="number" inputmode="decimal" placeholder="mmHg"></div>
+        <div class="field"><label for="pt-fc">FC</label><input id="pt-fc" type="number" inputmode="decimal" placeholder="bpm"></div>
+        <div class="field"><label for="pt-sat">SatO₂ %</label><input id="pt-sat" type="number" inputmode="decimal" placeholder="%"></div>
+        <div class="field"><label for="pt-cr">Creatinina</label><input id="pt-cr" type="number" step="any" inputmode="decimal" placeholder="mg/dL"></div>
+      </div><div id="pt-out" class="hint"></div></details>
+    <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="inf-q" placeholder="Busque pelo medicamento" aria-label="Busque pelo medicamento"></label>
+    <div id="inf-list"></div>
+  </div>
+  <div class="gtab" id="i-conv">
+    <div class="panel"><p class="gt">% ⇄ mg/mL</p><div class="fields"><div class="field"><label for="cv-pct">%</label><input id="cv-pct" type="number" step="any" value="1" inputmode="decimal"></div><div class="field"><label for="cv-mgml">mg/mL</label><input id="cv-mgml" type="number" step="any" value="10" inputmode="decimal"></div></div><p class="hint">1% = 10 mg/mL · 2% = 20 mg/mL · 0,9% = 9 mg/mL · 50% = 500 mg/mL</p></div>
+    <div class="panel"><p class="gt">mL/hora ⇄ gotas/min</p><div class="fields"><div class="field"><label for="cv-mlh">mL/h</label><input id="cv-mlh" type="number" step="any" value="60" inputmode="decimal"></div><div class="field"><label for="cv-gt">gotas/min (macro 20 gt/mL)</label><input id="cv-gt" type="number" step="any" value="20" inputmode="decimal"></div><div class="field"><label for="cv-mgt">microgotas/min</label><input id="cv-mgt" type="number" step="any" value="60" inputmode="decimal"></div></div><p class="hint">gotas/min = mL/h ÷ 3 · microgotas/min = mL/h</p></div>
+    <div class="panel"><p class="gt">mcg/kg/min ⇄ mL/h</p><div class="fields"><div class="field"><label for="cv-dose">mcg/kg/min</label><input id="cv-dose" type="number" step="any" value="0.1" inputmode="decimal"></div><div class="field"><label for="cv-peso">Peso kg</label><input id="cv-peso" type="number" step="any" value="70" inputmode="decimal"></div><div class="field"><label for="cv-conc">Concentração mcg/mL</label><input id="cv-conc" type="number" step="any" value="64" inputmode="decimal"></div><div class="field"><label for="cv-mlh2">mL/h</label><input id="cv-mlh2" type="number" step="any" inputmode="decimal"></div></div><p class="hint">mL/h = dose × peso × 60 ÷ concentração</p></div>
+    <div class="panel"><p class="gt">mL/hora ⇄ mcg/min</p><div class="fields"><div class="field"><label for="cv-mlh3">mL/h</label><input id="cv-mlh3" type="number" step="any" value="3" inputmode="decimal"></div><div class="field"><label for="cv-conc3">Concentração mcg/mL</label><input id="cv-conc3" type="number" step="any" value="200" inputmode="decimal"></div><div class="field"><label for="cv-mcgmin">mcg/min</label><input id="cv-mcgmin" type="number" step="any" inputmode="decimal"></div></div><p class="hint">mcg/min = mL/h × concentração ÷ 60</p></div>
+  </div>
+</section>
+<section class="screen" id="s-inf-one">
+  <div class="topbar"><button class="back" data-go="s-inf" aria-label="Voltar">‹</button><div><h1 id="in-title"></h1><div class="sub" id="in-amp"></div></div></div>
+  <div class="panel"><p class="sec">Apresentação da ampola</p><div class="box y" id="in-ampbox"></div><p class="sec" style="margin-top:10px">Como diluir</p><div class="box b" id="in-asp"></div><div class="formula" id="in-prep" style="white-space:normal"></div>
+    <div class="fields" style="margin-top:10px"><div class="field" id="in-pesof"><label for="in-peso">Peso kg</label><input id="in-peso" type="number" step="any" value="70" inputmode="decimal"></div><div class="field"><label for="in-dose" id="in-dosel">Dose</label><input id="in-dose" type="number" step="any" inputmode="decimal"></div><div class="field"><label for="in-conc">Concentração</label><input id="in-conc" type="number" step="any" inputmode="decimal"></div><div class="field"><label for="in-mlh">mL/h (inverso)</label><input id="in-mlh" type="number" step="any" inputmode="decimal"></div></div>
+    <div id="in-out" style="margin-top:12px"></div></div>
+  <div class="panel card-g"><p class="sec">Como fazer no paciente</p><div id="in-howto"></div></div>
+  <div class="panel"><p class="sec">Observações</p><ul class="list" id="in-notas"></ul></div>
+  <div class="panel card-p"><p class="sec">Evidência e protocolos</p><p id="in-ev" style="font-size:.84rem"></p></div>
+</section>
+
+<!-- SEQUÊNCIA RÁPIDA -->
+<section class="screen" id="s-rsi">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Sequência rápida</h1><div class="sub">Intubação orotraqueal — drogas e passo a passo</div></div></div>
+  <div class="seg" id="r-seg"><button class="on" data-rtab="r-drugs">Drogas</button><button data-rtab="r-steps">Passo a passo</button></div>
+  <div class="gtab active" id="r-drugs">
+    <div class="panel"><p class="sec">Informe os dados do paciente</p><div class="fields"><div class="field"><label for="r-peso">Peso kg</label><input id="r-peso" type="number" step="any" inputmode="decimal" placeholder="kg"></div><div class="field"><label for="r-idade">Idade anos</label><input id="r-idade" type="number" step="any" inputmode="decimal" placeholder="anos"></div></div></div>
+    <div class="panel"><p class="sec">Modelo mais utilizado</p><div class="field"><select id="r-preset"></select></div><p class="hint" id="r-why"></p></div>
+    <div class="panel rsi-g" style="border-left:4px solid var(--g4)"><p class="gt">Pré-droga</p><div class="field"><select id="r-pre"></select></div><p class="hint" id="r-pre-i"></p></div>
+    <div class="panel rsi-g" style="border-left:4px solid #2b7fb8"><p class="gt">Analgesia</p><div class="field"><select id="r-ana"></select></div><p class="hint" id="r-ana-i"></p></div>
+    <div class="panel rsi-g" style="border-left:4px solid var(--accent)"><p class="gt">Indução</p><div class="field"><select id="r-ind"></select></div><p class="hint" id="r-ind-i"></p></div>
+    <div class="panel rsi-g" style="border-left:4px solid var(--bad)"><p class="gt">Paralisia</p><div class="field"><select id="r-par"></select></div><p class="hint" id="r-par-i"></p></div>
+    <button class="btn primary wide" id="r-run">Iniciar sequência</button>
+    <div id="r-out"></div>
+  </div>
+  <div class="gtab" id="r-steps"><div id="r-plan"></div><div id="r-steplist"></div></div>
+</section>
+
+<!-- INTERAÇÕES -->
+<section class="screen" id="s-inter">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Interações medicamentosas</h1><div class="sub">Base local + consulta ao Claude</div></div></div>
+  <div class="panel"><p class="sec">Nova interação</p>
+    <div id="it-rows"></div>
+    <div class="actions"><button class="btn" id="it-add">+ Adicionar medicamento</button><button class="btn primary" id="it-run">Ver resultado</button></div>
+    <datalist id="it-dl"></datalist>
+  </div>
+  <div id="it-out"></div>
+</section>
+
+
+<!-- DOSES PEDIÁTRICAS -->
+<section class="screen" id="s-ped">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Doses pediátricas</h1><div class="sub">Cálculo por peso · SBP e bulas</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ped-q" placeholder="Busque pelo medicamento" aria-label="Busque pelo medicamento"></label>
+  <div id="ped-list"></div>
+</section>
+<section class="screen" id="s-ped-one">
+  <div class="topbar"><button class="back" data-go="s-ped" aria-label="Voltar">‹</button><div><h1 id="pd-title"></h1><div class="sub" id="pd-cat"></div></div></div>
+  <div class="wbar"><label for="pd-peso">Peso</label><input id="pd-peso" type="number" step="0.1" min="0.5" max="150" value="10" inputmode="decimal"><span>kg</span><span class="pill" id="pd-age"></span></div>
+  <div class="panel pd-ind"><p class="sec">Indicações</p><div id="pd-ind"></div></div>
+  <div id="pd-pres"></div>
+  <div class="panel"><p class="sec" style="color:var(--bad)">Observações</p><ul class="obs" id="pd-obs"></ul></div>
+  <div class="panel"><p class="sec">Prescrição para casa</p>
+    <div class="fields"><div class="field"><label for="rx-pres">Apresentação</label><select id="rx-pres"></select></div><div class="field"><label for="rx-days">Duração (dias)</label><input id="rx-days" type="number" min="1" value="3" inputmode="numeric"></div></div>
+    <pre class="rx" id="rx-text"></pre>
+    <div class="actions"><button class="btn primary" id="rx-copy">Copiar receita</button></div>
+  </div>
+  <p class="note">Doses de referência (Tratado de Pediatria da SBP, Harriet Lane, bulas ANVISA). Conferir a concentração do produto em mãos e a função renal/hepática antes de prescrever.</p>
+</section>
+
+<!-- GUIA ANTIMICROBIANO -->
+<section class="screen" id="s-abx">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Guia antimicrobiano</h1><div class="sub">Patógenos e síndromes por sistema</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ab-q" placeholder="Buscar patógenos ou sistemas" aria-label="Buscar"></label>
+  <div class="seg" id="ab-seg"><button class="on" data-abtab="ab-pat">Patógenos</button><button data-abtab="ab-sys">Sistemas</button></div>
+  <div class="gtab active" id="ab-pat"><div id="ab-groups"></div></div>
+  <div class="gtab" id="ab-sys"><div id="ab-syslist"></div></div>
+</section>
+<section class="screen" id="s-abx-list">
+  <div class="topbar"><button class="back" data-go="s-abx" aria-label="Voltar">‹</button><div><h1 id="abl-title"></h1><div class="sub" id="abl-sub"></div></div></div>
+  <div id="abl-list"></div>
+</section>
+<section class="screen" id="s-abx-one">
+  <div class="topbar"><button class="back" id="abo-back" aria-label="Voltar">‹</button><div><h1 id="abo-title"></h1><div class="sub" id="abo-sub"></div></div></div>
+  <div id="abo-body"></div>
+</section>
+
+<!-- ASSISTENTE DE REANIMAÇÃO -->
+<section class="screen" id="s-rcp">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Assistente de reanimação</h1><div class="sub">ACLS / PALS 2020 — cronômetro, ciclos e drogas</div></div></div>
+  <div class="panel" id="rcp-setup">
+    <div class="fields"><div class="field"><label for="rc-tipo">Paciente</label><select id="rc-tipo"><option value="adulto">Adulto</option><option value="ped">Pediátrico (peso)</option></select></div><div class="field"><label for="rc-peso">Peso kg (pediátrico)</label><input id="rc-peso" type="number" step="any" inputmode="decimal" placeholder="kg"></div><div class="field"><label for="rc-desf">Desfibrilador</label><select id="rc-desf"><option value="bi">Bifásico</option><option value="mono">Monofásico</option></select></div></div>
+    <p class="sec" style="margin-top:12px">Ritmo inicial</p>
+    <div class="rhythm"><button data-r="FV" class="r-shock">FV</button><button data-r="TVSP" class="r-shock">TV sem pulso</button><button data-r="AESP" class="r-non">AESP</button><button data-r="Assistolia" class="r-non">Assistolia</button></div>
+    <p class="hint">Toque no ritmo para iniciar o cronômetro. Confirme assistolia (ganho, derivações, cabos) antes de rotular.</p>
+  </div>
+  <div id="rcp-run" hidden>
+    <div class="rcp-head">
+      <div><div class="rcp-lbl">Tempo total</div><div class="rcp-big" id="rc-total">00:00</div></div>
+      <div><div class="rcp-lbl">Ciclo <span id="rc-cyc">1</span> · restam</div><div class="rcp-big" id="rc-cycle">02:00</div></div>
+      <div><div class="rcp-lbl">Ritmo</div><div class="rcp-mid" id="rc-rhythm">—</div></div>
+    </div>
+    <div class="box r" id="rc-alert" hidden></div>
+    <div class="panel"><p class="sec">Agora</p><div id="rc-now" style="font-size:.95rem;line-height:1.5"></div></div>
+    <div class="rcp-btns">
+      <button class="btn primary" id="rc-shock">⚡ Choque <span id="rc-j"></span></button>
+      <button class="btn" id="rc-epi">Adrenalina <span id="rc-epid"></span></button>
+      <button class="btn" id="rc-amio">Amiodarona <span id="rc-amiod"></span></button>
+      <button class="btn" id="rc-lido">Lidocaína <span id="rc-lidod"></span></button>
+      <button class="btn" id="rc-check">Checar ritmo / novo ciclo</button>
+      <button class="btn" id="rc-airway">Via aérea avançada</button>
+      <button class="btn" id="rc-rosc" style="border-color:var(--ok);color:var(--ok)">RCE (retorno)</button>
+      <button class="btn ghost" id="rc-stop">Encerrar</button>
+    </div>
+    <div class="panel"><p class="sec">Próximas doses</p><div id="rc-next" class="rows"></div></div>
+    <div class="panel"><p class="sec">Causas reversíveis (5H / 5T)</p><div class="two"><div class="box y"><b>H:</b> Hipovolemia · Hipóxia · H⁺ (acidose) · Hipo/hipercalemia · Hipotermia</div><div class="box b"><b>T:</b> Tensão (pneumotórax) · Tamponamento · Toxinas · Trombose coronária · Trombose pulmonar</div></div></div>
+    <div class="panel"><p class="sec">Registro</p><div id="rc-log" class="rcp-log"></div><div class="actions"><button class="btn" id="rc-copy">Copiar registro</button></div></div>
+  </div>
+  <div class="panel" id="rcp-guide">
+    <p class="sec">Protocolos</p>
+    <div class="box r"><b>FV / TV sem pulso (chocável):</b> RCP 30:2 (100–120/min, 5–6 cm, retorno total, interrupções &lt; 10 s) → choque (bifásico 120–200 J; monofásico 360 J; pediátrico 2 J/kg → 4 J/kg → ≥ 4 J/kg, máx. 10 J/kg) → RCP 2 min → checar ritmo → 2º choque → RCP 2 min + <b>adrenalina 1 mg</b> (0,01 mg/kg) a cada 3–5 min → 3º choque → RCP 2 min + <b>amiodarona 300 mg</b> (5 mg/kg) → 5º choque: amiodarona 150 mg (2ª dose) ou lidocaína 1–1,5 mg/kg (2ª: 0,5–0,75). Via aérea avançada: compressões contínuas + 1 ventilação a cada 6 s; capnografia (PETCO₂ &gt; 10; &gt; 20 ideal).</div>
+    <div class="box b"><b>AESP / Assistolia (não chocável):</b> RCP 2 min → <b>adrenalina 1 mg o mais precoce possível</b> e a cada 3–5 min → checar ritmo a cada 2 min → tratar 5H/5T (volume, O₂, bicarbonato se hipercalemia/tricíclicos, cálcio, aquecimento, descompressão, pericardiocentese, trombólise se TEP, antídotos). Sem atropina de rotina (AHA 2010+).</div>
+    <div class="box g"><b>Pós-RCE:</b> SatO₂ 92–98%, PaCO₂ 35–45, PAS &gt; 90 / PAM ≥ 65, ECG 12 derivações (cateterismo se IAMCSST), controle de temperatura 32–37,5 °C por ≥ 24 h evitando febre (TTM2), tratar causa, EEG se não responsivo, prognóstico ≥ 72 h.</div>
+    <div class="box y"><b>Pediátrico (PALS):</b> compressões 100–120/min, 1/3 do diâmetro AP (4 cm lactente, 5 cm criança), 15:2 com 2 socorristas; ventilação 20–30/min com via aérea avançada; adrenalina 0,01 mg/kg (0,1 mL/kg de 1:10.000) a cada 3–5 min; amiodarona 5 mg/kg (até 3 doses) ou lidocaína 1 mg/kg; choque 2 → 4 J/kg. Neonatal: 3:1, FC &lt; 60 após 30 s de VPP → compressões; adrenalina 0,01–0,03 mg/kg.</div>
+    <p class="note">AHA 2020 (ACLS/PALS); ERC 2021; SBC; PARAMEDIC2 2018 (adrenalina); ALPS 2016 (amiodarona/lidocaína); TTM2 2021. Interrupções mínimas e RCP de alta qualidade importam mais que qualquer droga.</p>
+  </div>
+</section>
+
+
+<!-- LABORATÓRIOS -->
+<section class="screen" id="s-lab">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Laboratórios</h1><div class="sub">Valores de referência e interpretação</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="lb-q" placeholder="Buscar exame" aria-label="Buscar"></label>
+  <div id="lb-groups"></div>
+</section>
+<section class="screen" id="s-lab-list">
+  <div class="topbar"><button class="back" data-go="s-lab" aria-label="Voltar">‹</button><div><h1 id="lbl-title"></h1><div class="sub" id="lbl-sub"></div></div></div>
+  <div id="lbl-list"></div>
+</section>
+
+<!-- TOXICOLOGIA -->
+<section class="screen" id="s-tox">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Toxicologia</h1><div class="sub">Toxíndromes, exames e antídotos</div></div></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="tx-q" placeholder="Buscar agente" aria-label="Buscar"></label>
+  <div id="tx-groups"></div>
+  <div class="panel"><p class="sec">Abordagem geral</p>
+    <div class="box b"><b>ABCDE + descontaminação:</b> carvão ativado 1 g/kg (máx. 50 g) se &lt; 1–2 h e via aérea protegida (não para álcoois, metais, hidrocarbonetos, cáusticos); lavagem gástrica raramente (&lt; 1 h, dose letal); irrigação intestinal total (PEG 25–40 mL/kg/h) para body packers, ferro, lítio, liberação lenta.</div>
+    <div class="box y"><b>Sempre:</b> glicemia, ECG (QRS, QTc), gasometria com lactato, eletrólitos (ânion gap), função renal/hepática, CK, paracetamol e salicilato séricos em ingestão intencional, β-hCG. <b>CIATox 0800 722 6001</b> (24 h).</div>
+    <div class="box g"><b>Toxíndromes:</b> colinérgica (DUMBELS), anticolinérgica (quente, seco, vermelho, delirante, midríase), simpaticomimética (agitado, suado, midríase, taquicardia), opioide (miose, bradipneia, coma), sedativo-hipnótica, serotoninérgica (clônus, hiperreflexia, hipertermia).</div>
+  </div>
+</section>
+<section class="screen" id="s-tox-list">
+  <div class="topbar"><button class="back" data-go="s-tox" aria-label="Voltar">‹</button><div><h1 id="txl-title"></h1><div class="sub" id="txl-sub"></div></div></div>
+  <div id="txl-list"></div>
+</section>
+<section class="screen" id="s-tox-one">
+  <div class="topbar"><button class="back" id="txo-back" aria-label="Voltar">‹</button><div><h1 id="txo-title"></h1><div class="sub" id="txo-sub"></div></div></div>
+  <div id="txo-body"></div>
+</section>
+
+<!-- PROTOCOLOS EMERGENCIAIS -->
+<section class="screen" id="s-emerg">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Protocolos emergenciais</h1><div class="sub">ATLS · BLS/ACLS · PBLS/PALS · Reanimação neonatal</div></div></div>
+  <div id="em-list"></div>
+</section>
+<section class="screen" id="s-emerg-one">
+  <div class="topbar"><button class="back" data-go="s-emerg" aria-label="Voltar">‹</button><div><h1 id="emo-title"></h1><div class="sub" id="emo-sub"></div></div></div>
+  <div id="emo-body" class="proto"></div>
+</section>
+
+<!-- CALENDÁRIOS VACINAIS -->
+<section class="screen" id="s-vac">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Calendários vacinais</h1><div class="sub">PNI 2024–2025 · SBIm · SBP</div></div></div>
+  <div class="seg" id="vc-seg"><button class="on" data-vctab="vc-cal">Calendários</button><button data-vctab="vc-pri">Princípios</button><button data-vctab="vc-vac">Vacinas</button></div>
+  <div class="gtab active" id="vc-cal"><div id="vc-callist"></div></div>
+  <div class="gtab" id="vc-pri"><div id="vc-prilist"></div></div>
+  <div class="gtab" id="vc-vac"><label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="vc-q" placeholder="Buscar vacina" aria-label="Buscar"></label><div id="vc-vaclist"></div></div>
+</section>
+<section class="screen" id="s-vac-one">
+  <div class="topbar"><button class="back" data-go="s-vac" aria-label="Voltar">‹</button><div><h1 id="vco-title"></h1><div class="sub" id="vco-sub"></div></div></div>
+  <div id="vco-body"></div>
+</section>
+
+<!-- PRESSÃO INFANTIL -->
+<section class="screen" id="s-pa">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Pressão infantil</h1><div class="sub">Percentis e classificação — AAP 2017 / SBC 2020</div></div></div>
+  <div class="panel">
+    <div class="fields">
+      <div class="field"><label for="pa-sex">Sexo</label><select id="pa-sex"><option value="m">Masculino</option><option value="f">Feminino</option></select></div>
+      <div class="field"><label for="pa-age">Idade (anos)</label><input id="pa-age" type="number" min="1" max="17" step="1" inputmode="numeric" placeholder="1–17"></div>
+      <div class="field"><label for="pa-h">Altura (cm)</label><input id="pa-h" type="number" step="any" inputmode="decimal" placeholder="cm"></div>
+      <div class="field"><label for="pa-s">PAS (mmHg)</label><input id="pa-s" type="number" inputmode="numeric" placeholder="sistólica"></div>
+      <div class="field"><label for="pa-d">PAD (mmHg)</label><input id="pa-d" type="number" inputmode="numeric" placeholder="diastólica"></div>
+    </div>
+    <div class="actions"><button class="btn primary wide" id="pa-run">Avançar</button></div>
+  </div>
+  <div id="pa-out"></div>
+  <div class="panel"><p class="sec">Como medir</p><div class="box b">Criança sentada, 3–5 min de repouso, braço direito apoiado ao nível do coração, manguito com bolsa cobrindo 40% da circunferência e 80–100% do comprimento do braço; auscultatório confirma valores elevados do oscilométrico; média de 2–3 medidas. Rastrear anualmente a partir dos 3 anos (a cada consulta se obesidade, DRC, diabetes, coarctação, medicamentos). Em &lt; 1 ano/UTI: percentis neonatais específicos.</div></div>
+</section>
+
+<!-- HIDRATAÇÃO PEDIÁTRICA -->
+<section class="screen" id="s-hid">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Hidratação pediátrica</h1><div class="sub">Manutenção, expansão, déficit e planos OMS</div></div></div>
+  <div class="panel">
+    <div class="fields">
+      <div class="field"><label for="hd-w">Peso (kg)</label><input id="hd-w" type="number" step="any" inputmode="decimal" placeholder="kg"></div>
+      <div class="field"><label for="hd-age">Idade</label><select id="hd-age"><option value="lt1">&lt; 1 ano</option><option value="gt1">&gt; 1 ano</option></select></div>
+      <div class="field"><label for="hd-kcl">KCl disponível</label><select id="hd-kcl"><option value="2.5">KCl 19,1% (2,5 mEq/mL)</option><option value="1.34">KCl 10% (1,34 mEq/mL)</option></select></div>
+      <div class="field"><label for="hd-deg">Desidratação</label><select id="hd-deg"><option value="0">Sem desidratação</option><option value="5">Leve (3–5%)</option><option value="8">Moderada (6–9%)</option><option value="10">Grave (≥ 10%)</option></select></div>
+    </div>
+    <div class="actions"><button class="btn primary wide" id="hd-run">Avançar</button></div>
+  </div>
+  <div id="hd-out"></div>
+</section>
+
+
+<!-- RECEITA RÁPIDA PS -->
+<section class="screen" id="s-rx">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1 id="rx-title">Receita Rápida PS</h1><div class="sub" id="rx-sub">Prescrições prontas para o plantão — PS (IM/EV) e para casa</div></div></div>
+  <div class="seg" id="rx-seg"><button class="on" data-rxmode="a">Adulto</button><button data-rxmode="p">Pediatria</button></div>
+  <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="rx-q" placeholder="Buscar doença, sintoma ou CID" aria-label="Buscar"></label>
+  <div class="chips" id="rx-chips"></div>
+  <p class="rxcount" id="rx-count"></p>
+  <div id="rx-list"></div>
+  <p class="note" id="rx-foot">Modelos baseados em diretrizes (SBP, SBC, SBPT, IDSA, AAP, NICE, OMS/MS) e revisões sistemáticas citadas em cada condição. Sempre individualize: alergias, função renal/hepática, gestação, interações e a apresentação disponível.</p>
+</section>
+<section class="screen" id="s-rx-one">
+  <div class="topbar"><button class="back" data-go="s-rx" aria-label="Voltar">‹</button><div><h1 id="rxo-title"></h1></div><button class="favbtn" id="rxo-fav" aria-label="Favoritar">★</button></div>
+  <div class="rxhead"><button class="cidchip" id="rxo-cidcopy"><span id="rxo-cid"></span> ⧉</button><span class="spchip" id="rxo-sp"></span></div>
+  <div class="panel" id="rxo-peso" hidden><div class="fields"><div class="field"><label for="rx-w"><b>Peso da criança (kg)</b></label><input id="rx-w" type="number" step="any" inputmode="decimal" placeholder="ex.: 12,5"></div></div><p class="hint">As doses destacadas são recalculadas automaticamente (respeitando a dose máxima).</p></div>
+  <div class="seg" id="rxo-seg"><button class="on" data-rxtab="ps">No PS</button><button data-rxtab="casa">Para casa</button><button data-rxtab="ori">Orientações</button><button data-rxtab="exp">Explicações</button></div>
+  <div id="rxo-body"></div>
+</section>
+
+
+<!-- ESQUELETO DE ATENDIMENTO -->
+<section class="screen" id="s-note">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Esqueleto de atendimento</h1><div class="sub">Modelos resumidos — edite, copie e cole no prontuário</div></div></div>
+  <div class="chips" id="nt-chips"></div>
+  <div class="panel">
+    <textarea id="nt-text" class="nt-ta" spellcheck="false"></textarea>
+    <p class="hint" id="nt-count"></p>
+    <div class="actions"><button class="btn primary" id="nt-copy">Copiar tudo</button><button class="btn" id="nt-next">Próximo ____</button><button class="btn" id="nt-date">Data/hora</button><button class="btn ghost" id="nt-reset">Restaurar</button><button class="btn ghost" id="nt-clear">Limpar</button></div>
+    <p class="box g" id="nt-flash" hidden></p>
+  </div>
+  <details class="panel rxmore"><summary>Inserir da Semiologia / prescrição (opcional)</summary>
+    <div class="fields"><div class="field"><label for="nt-sp">Sistema</label><select id="nt-sp"></select></div><div class="field"><label for="nt-tp">Tópico</label><select id="nt-tp"><option value="">— tópico —</option></select></div></div>
+    <div class="actions"><button class="btn" id="nt-sm-exam">Exame direcionado</button><button class="btn" id="nt-sm-dx">Hipóteses + conduta</button><button class="btn ghost" id="nt-sm-all">Roteiro do sistema</button></div>
+    <div class="fields" style="margin-top:10px"><div class="field" style="grid-column:1/-1"><label for="nt-rx-q">Buscar prescrição</label><input id="nt-rx-q" placeholder="ex.: hipertensão, otite, dengue"></div><div class="field"><label for="nt-rx-what">Inserir</label><select id="nt-rx-what"><option value="casa">Receituário</option><option value="ps">Conduta / PS</option><option value="both">Ambos</option></select></div><div class="field"><label for="nt-w">Peso (kg)</label><input id="nt-w" type="number" step="any" inputmode="decimal" placeholder="pediatria"></div></div>
+    <div class="chips" id="nt-rx-hits" style="flex-wrap:wrap"></div>
+  </details>
+  <select id="nt-tpl" hidden></select>
+  <p class="note">O texto fica salvo neste aparelho (por modelo) até você limpar. Campos ____ são para preencher.</p>
+</section>
+
+<!-- EM BREVE -->
+<section class="screen" id="s-soon">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1 id="soon-title"></h1><div class="sub">Em construção</div></div></div>
+  <div class="panel">Este módulo ainda não foi construído. Diga o que quer dentro dele e eu adiciono.</div>
+</section>
+
+<!-- LOGIN / CADASTRO -->
+<section class="screen auth" id="s-auth">
+  <div class="auth-wrap">
+    <div class="auth-logo"><svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#1c3f52"/><path d="M60 690 H330 l34 0 l30 -84 l42 168 l36 -214 l38 130 l28 0 H964" fill="none" stroke="#e8702a" stroke-width="22" stroke-linejoin="round" stroke-linecap="round"/><text x="512" y="545" text-anchor="middle" font-family="Sora,Inter,system-ui,sans-serif" font-weight="700" font-size="372" letter-spacing="-22" fill="#fff">M<tspan fill="#e8702a">e</tspan>K</text></svg></div>
+    <h1 class="auth-title">Med<em>Kit</em></h1>
+    <p class="auth-sub">Ferramentas de beira-leito para o plantão e o consultório.</p>
+    <div class="seg" id="au-seg"><button class="on" data-au="in">Entrar</button><button data-au="up">Criar conta</button></div>
+    <div class="panel">
+      <div class="fields">
+        <div class="field au-up" hidden><label for="au-nome">Nome</label><input id="au-nome" autocomplete="name" placeholder="Dr(a). Nome Sobrenome"></div>
+        <div class="field au-up" hidden><label for="au-crm">CRM / UF (opcional)</label><input id="au-crm" placeholder="123456 / PA"></div>
+        <div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" autocomplete="email" inputmode="email" placeholder="voce@exemplo.com"></div>
+        <div class="field"><label for="au-pass">Senha</label><input id="au-pass" type="password" autocomplete="current-password" placeholder="mínimo 8 caracteres"></div>
+      </div>
+      <div class="actions"><button class="btn primary" id="au-go" style="flex:1">Entrar</button></div>
+      <button class="link" id="au-forgot">Esqueci minha senha</button>
+      <p class="hint" id="au-msg"></p>
+      <p class="hint au-up" hidden>Ao criar a conta você aceita os <button class="link inline" data-go="s-legal">Termos de uso e a Política de privacidade</button>. Teste grátis por <span id="au-trial">7</span> dias.</p>
+    </div>
+    <p class="note" id="au-demo" hidden>Login ainda não configurado neste build (modo demonstração). <button class="link inline" id="au-skip">Continuar sem conta ›</button></p>
+  </div>
+</section>
+
+<!-- ASSINATURA -->
+<section class="screen auth" id="s-pay">
+  <div class="auth-wrap">
+    <div class="auth-logo small"><svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#1c3f52"/><text x="512" y="560" text-anchor="middle" font-family="Sora,Inter,system-ui,sans-serif" font-weight="700" font-size="372" letter-spacing="-22" fill="#fff">M<tspan fill="#e8702a">e</tspan>K</text></svg></div>
+    <h1 class="auth-title" style="font-size:1.4rem">Assine o <span id="pay-plan">MedKit Pro</span></h1>
+    <p class="auth-sub" id="pay-why">Seu período de teste terminou. Continue com acesso a todos os módulos.</p>
+    <div class="panel pay-card">
+      <div class="pay-price"><b id="pay-price">R$ 29,90</b><span>/<span id="pay-period">mês</span></span></div>
+      <ul class="list tight">
+        <li>Receita Rápida PS e Ambulatório (130+ condições)</li>
+        <li>Gasometria, scores, calculadoras e doses pediátricas</li>
+        <li>Guia antimicrobiano, toxicologia e protocolos</li>
+        <li>Laudo de exames com IA</li>
+        <li>Atualizações contínuas por diretrizes</li>
+      </ul>
+      <div class="actions"><button class="btn primary" id="pay-buy" style="flex:1">Assinar agora</button></div>
+      <div class="actions"><button class="btn" id="pay-restore">Restaurar compra</button><button class="btn" id="pay-refresh">Já paguei — atualizar</button></div>
+      <p class="hint" id="pay-msg"></p>
+    </div>
+    <p class="note">Cancele quando quiser. <button class="link inline" id="pay-logout">Sair da conta</button> · <button class="link inline" data-go="s-legal">Termos</button></p>
+  </div>
+</section>
+
+<!-- CONTA -->
+<section class="screen" id="s-account">
+  <div class="topbar"><button class="back" data-go="s-home" aria-label="Voltar">‹</button><div><h1>Minha conta</h1><div class="sub" id="ac-email">—</div></div></div>
+  <div class="panel">
+    <p class="sec">Assinatura</p>
+    <div class="rows"><div class="row"><div class="k">Plano</div><div class="v" id="ac-plan">—</div></div><div class="row"><div class="k">Status</div><div class="v" id="ac-status">—</div></div><div class="row"><div class="k">Válido até</div><div class="v" id="ac-until">—</div></div></div>
+    <div class="actions"><button class="btn" id="ac-manage">Gerenciar assinatura</button><button class="btn" id="ac-refresh">Atualizar</button></div>
+  </div>
+  <div class="panel">
+    <p class="sec">Laudo com IA</p>
+    <p class="hint" id="ac-ai-status">—</p>
+    <div class="field" id="ac-key-wrap"><label for="ac-key">Minha chave do Google AI Studio (gratuita)</label><input id="ac-key" type="password" placeholder="AIza…" autocomplete="off"><p class="hint">Crie em aistudio.google.com › Get API key. A chave fica só neste aparelho. Na camada gratuita o Google pode usar o conteúdo enviado para melhorar os modelos — <b>nunca envie exames com nome, CPF ou foto do paciente</b>.</p></div>
+    <div class="actions"><button class="btn" id="ac-key-save">Salvar chave</button><button class="btn ghost" id="ac-key-del">Remover</button></div>
+  </div>
+  <div class="panel">
+    <p class="sec">Sobre</p>
+    <div class="rows"><div class="row"><div class="k">Versão</div><div class="v" id="ac-ver">—</div></div></div>
+    <div class="actions"><button class="btn" data-go="s-legal">Termos e privacidade</button><button class="btn" id="ac-support">Suporte</button></div>
+    <div class="actions"><button class="btn" id="ac-logout">Sair da conta</button><button class="btn ghost" id="ac-delete">Excluir conta e dados</button></div>
+  </div>
+</section>
+
+<!-- TERMOS -->
+<section class="screen" id="s-legal">
+  <div class="topbar"><button class="back" id="legal-back" aria-label="Voltar">‹</button><div><h1>Termos e privacidade</h1><div class="sub">Leia antes de usar</div></div></div>
+  <div class="panel md">
+    <h4>Finalidade</h4><p>O MedKit é uma ferramenta de apoio à decisão destinada a profissionais de saúde habilitados. Não substitui o julgamento clínico, protocolos institucionais nem a bula dos medicamentos. Doses, condutas e laudos devem ser conferidos pelo médico responsável, que responde integralmente pela prescrição e pela assistência.</p>
+    <h4>Conteúdo</h4><p>As condutas são compiladas de diretrizes e revisões sistemáticas citadas em cada módulo e podem ficar desatualizadas. Reporte erros pelo canal de suporte.</p>
+    <h4>Laudo com IA</h4><p>O módulo de interpretação de exames envia a imagem ou o texto do exame a um serviço de inteligência artificial de terceiros (Google Gemini, ou Claude quando usado dentro do Claude) e devolve um rascunho de laudo. O rascunho pode conter erros e <b>precisa ser revisado e assinado por médico</b>. Não envie dados que identifiquem o paciente (nome, CPF, prontuário, rosto): cubra ou recorte antes de fotografar. O uso do módulo pressupõe que você possui base legal para o tratamento dos dados, nos termos da LGPD (Lei 13.709/2018).</p>
+    <h4>Dados pessoais</h4><p>Guardamos apenas o necessário para a conta: e-mail, nome, CRM (opcional) e o status da assinatura. Textos digitados em esqueletos, favoritos e histórico ficam somente no seu aparelho. Pagamentos são processados pela App Store, Google Play ou Mercado Pago/Stripe; não armazenamos dados de cartão. Você pode pedir a exclusão da conta a qualquer momento em Minha conta.</p>
+    <h4>Assinatura</h4><p>A assinatura renova automaticamente até ser cancelada nas configurações da loja ou do meio de pagamento. O período de teste gratuito, quando oferecido, converte-se em assinatura paga ao final se não for cancelado.</p>
+    <h4>Contato</h4><p id="legal-contact">Suporte: —</p>
+  </div>
+</section>
+
+</div>
+
+<nav class="tabnav">
+  <button class="on" data-go="s-home"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+  <button data-go="s-gaso"><svg viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg>Gasometria</button>
+  <button data-go="s-calc"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h3M13 12h3M8 16h3M13 16h3"/></svg>Calculadoras</button>
+  <button data-go="s-score"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Scores</button>
+</nav>
+
+<script src="app-config.js"></script>
+<script src="peds-data.js"></script>
+<script src="calc-data.js"></script>
+<script src="inf-data.js"></script>
+<script src="inter-data.js"></script>
+<script src="scores-data.js"></script>
+<script src="criteria-data.js"></script>
+<script src="semio-data.js"></script>
+<script src="abx-data.js"></script>
+<script src="lab-data.js"></script>
+<script src="tox-data.js"></script>
+<script src="emerg-data.js"></script>
+<script src="vac-data.js"></script>
+<script src="rx-adult.js"></script>
+<script src="rx-adult2.js"></script>
+<script src="rx-adult3.js"></script>
+<script src="rx-adult4.js"></script>
+<script src="rx-ped.js"></script>
+<script src="rx-ped2.js"></script>
+<script src="rx-ped3.js"></script>
+<script src="rx-ped4.js"></script>
+<script src="rx-queixas.js"></script>
+<script src="rx-quick.js"></script>
+<script src="rx-amb.js"></script>
+<script src="rx-amb2.js"></script>
+<script src="rx-amb3.js"></script>
+<script src="rx-amb-quick.js"></script>
+<script src="rx-cad.js"></script>
+<script src="rx-k.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value);return isNaN(v)?null:v};
+const f=(x,d=1)=>x==null||isNaN(x)?'—':x.toFixed(d).replace('.',',');
+
+/* ---------- navegação ---------- */
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('.tabnav button').forEach(b=>b.classList.toggle('on',b.dataset.go===id||(id.startsWith(b.dataset.go)&&b.dataset.go!=='s-home')));
+  window.scrollTo({top:0})}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go)});
+
+/* ---------- tiles ---------- */
+const I={
+  drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  calc:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h3M13 12h3M8 16h3M13 16h3"/>',
+  score:'<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
+  ion:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M7 9h3M7 15h3M14 12h3"/>',
+  inf:'<path d="M9 3h6v6a3 3 0 0 1-6 0z"/><path d="M12 12v5M10 21h4M12 17v4"/>',
+  ped:'<path d="M5 8c0-3 14-3 14 0v8c0 3-14 3-14 0z"/><path d="M12 5V3M8 13h8"/>',
+  tube:'<path d="M4 12c3-5 7-6 9-6l7 3-2 5-5 2c-3 0-6 0-9-4z"/><path d="M14 9l4 2"/>',
+  rcp:'<path d="M3 12h4l2-5 3 10 2-7 2 4h5"/>',
+  abx:'<path d="M9 3l12 12-6 6L3 9z"/><path d="M9 3 3 9M12 12l6-6"/>',
+  pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M8.5 8.5l7 7"/>',
+  book:'<path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2z"/><path d="M4 16h14M8 8h6"/>',
+  steth:'<path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 13v3a4 4 0 0 0 8 0v-2"/><circle cx="18" cy="11" r="2"/>',
+  xray:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 6v12M8 9h8M8 12h8M9 15h6"/>',
+  lab:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7 15h10"/>',
+  tox:'<circle cx="12" cy="9" r="5"/><path d="M9 14l-2 7M15 14l2 7M8 21h8M10 8h.01M14 8h.01"/>',
+  emerg:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+  vac:'<path d="M18 3l3 3M14 4l6 6M15 9 7 17l-3 3M9 15l-2-2M12 12l-2-2"/><path d="M4 20l3-3"/>',
+  pa:'<path d="M20 12h-4l-2 5-4-10-2 5H4"/><circle cx="12" cy="12" r="10"/>',
+  hid:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/><path d="M9 14a3 3 0 0 0 3 3"/>',
+  rx:'<path d="M6 3h6a4 4 0 0 1 0 8H6zM6 11v10M10 11l8 10M18 11l-8 10"/>',
+  note:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  amb:'<path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6M12 10v4M10 12h4"/>',
+};
+const tiles=[
+  ['Gasometria','s-gaso','t6','drop'],['Calculadoras','s-calc','t2','calc'],['Scores','s-score','t3','score'],['Distúrbios hidroeletrolíticos','s-hidro','t5','ion'],
+  ['Infusões e drippings','s-inf','t1','inf'],['Doses pediátricas','s-ped','t7','ped'],['Intubação orotraqueal','s-rsi','t3','tube'],['Assistente de reanimação','s-rcp','t6','rcp'],
+  ['Guia antimicrobiano','s-abx','t1','abx'],['Interações','s-inter','t2','pill'],['Semiologia','s-semio','t4','steth'],['Critérios diagnósticos','s-crit','t8','book'],['Interpretação de exames','s-exam','t5','xray'],
+  ['Receita Rápida PS','rx-ps','t6','rx'],['Receita Rápida Ambulatório','rx-amb','t1','amb'],['Esqueleto de atendimento','s-note','t4','note'],  ['Laboratórios','s-lab','t2','lab'],['Toxicologia','s-tox','t8','tox'],['Protocolos emergenciais','s-emerg','t6','emerg'],['Calendários vacinais','s-vac','t4','vac'],['Pressão infantil','s-pa','t1','pa'],['Hidratação pediátrica','s-hid','t3','hid'],
+];
+function drawGrid(filter=''){
+  $('grid').innerHTML=tiles.filter(t=>t[0].toLowerCase().includes(filter.toLowerCase())).map(([n,go,c,ic])=>`<button class="tile ${go==='soon'?'soon':''}" data-tile="${go}" data-name="${n}"><span class="ic" style="background:var(--${c})"><svg viewBox="0 0 24 24">${I[ic]}</svg></span>${n}</button>`).join('');
+}
+drawGrid();
+$('q').addEventListener('input',e=>drawGrid(e.target.value));
+$('grid').addEventListener('click',e=>{const t=e.target.closest('[data-tile]');if(!t)return;const id=t.dataset.tile;if(id==='soon'){$('soon-title').textContent=t.dataset.name;go('s-soon')}else if(id==='rx-ps'||id==='rx-amb'){window.rxOpenMode&&rxOpenMode(id==='rx-amb'?'c':'a');go('s-rx')}else go(id)});
+
+/* ---------- gasometria fácil ---------- */
+const ex={1:{ph:7.12,pco2:18,hco3:6,po2:98,sat:97,fio2:0.21,lac:2.1,na:132,cl:96,k:5.6,alb:3.9,gli:480},
+          2:{ph:7.28,pco2:72,hco3:33,po2:54,sat:85,fio2:0.28,lac:1.4,na:140,cl:97,k:4.2,alb:3.5,gli:120,be:6},
+          3:{ph:7.54,pco2:48,hco3:40,po2:85,sat:95,fio2:0.21,lac:1.1,na:136,cl:88,k:2.7,alb:4.0,gli:95,be:14}};
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{['ph','pco2','hco3','be','po2','sat','fio2','lac','na','cl','k','alb','gli'].forEach(k=>$(k).value='');const o=ex[b.dataset.ex];for(const k in o)$(k).value=o[k];runGaso()});
+$('g-clear').onclick=()=>{['ph','pco2','hco3','be','po2','sat','fio2','lac','na','cl','k','alb','gli','g-id','g-notes'].forEach(k=>$(k).value='');$('g-result').innerHTML=''};
+$('g-seg').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;$('g-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.gtab').forEach(t=>t.classList.toggle('active',t.id===b.dataset.tab));if(b.dataset.tab==='g-hist')drawHist()};
+$('g-gseg').onclick=e=>{const b=e.target.closest('[data-gtab]');if(!b)return;$('g-gseg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.ggtab').forEach(t=>t.classList.toggle('active',t.id===b.dataset.gtab))};
+const res=(cls,b,s)=>`<div class="result ${cls}"><b>${b}</b>${s?`<span>${s}</span>`:''}</div>`;
+
+function interpretGaso(v){
+  const {ph,pco2}=v;let hco3=v.hco3;const {be,po2,sat,lac,na,cl,k,alb,gli}=v;const fio2=v.fio2||0.21;
+  let calc=false;if(hco3==null){hco3=0.03*pco2*Math.pow(10,ph-6.1);calc=true}
+  const acid=ph<7.35,alc=ph>7.45;const steps=[],dx=[],tx=[],ddx=[];
+  steps.push({t:'1. pH',r:acid?'ACIDOSE':alc?'ALCALOSE':'Normal',c:acid||alc?(ph<7.2||ph>7.6?'bad':'warn'):'ok',s:`pH ${f(ph,2)}${calc?' · HCO₃⁻ calculado '+f(hco3,1):''}`});
+  const am=hco3<22,ar=pco2>45,alm=hco3>26,alr=pco2<35;
+  let prim=[];
+  if(acid){if(am)prim.push('acidose metabólica');if(ar)prim.push('acidose respiratória')}
+  else if(alc){if(alm)prim.push('alcalose metabólica');if(alr)prim.push('alcalose respiratória')}
+  else{if(am&&alr)prim.push('acidose metabólica + alcalose respiratória (pH normal: misto)');else if(alm&&ar)prim.push('alcalose metabólica + acidose respiratória (pH normal: misto)')}
+  const isAM=prim.some(p=>p.startsWith('acidose metabólica')),isAR=prim.some(p=>p.startsWith('acidose respiratória')),isALM=prim.some(p=>p.startsWith('alcalose metabólica')),isALR=prim.some(p=>p.startsWith('alcalose respiratória'));
+  steps.push({t:'2. Responsável',r:prim.length?prim.join(' + '):'Sem distúrbio primário',c:prim.length?'warn':'ok',s:`PaCO₂ ${f(pco2,0)} (35–45) · HCO₃⁻ ${f(hco3,1)} (22–26)`});
+  if(isAR||isALR){const cr=be!=null?Math.abs(be)>3:(isAR?hco3>26+2:hco3<22-2);steps.push({t:'3. Agudo ou crônico',r:cr?'Padrão CRÔNICO (compensação renal presente)':'Padrão AGUDO (sem compensação renal)',c:'ok',s:be!=null?`BE ${f(be,1)} (−3 a +3)`:'Estimado pelo HCO₃⁻ (BE não informado)'})}
+  else steps.push({t:'3. Agudo ou crônico',r:'Não se aplica (distúrbio metabólico)',c:'ok',s:''});
+  let comp='',cc='ok',form='';
+  if(isAM&&!isAR){const e=1.5*hco3+8;form=`PaCO₂ esperada = 1,5 × ${f(hco3,1)} + 8 = ${f(e,0)} ± 2 (medida ${f(pco2,0)})`;if(pco2>e+2){comp='PaCO₂ acima do esperado → acidose respiratória associada';cc='warn';dx.push('acidose respiratória')}else if(pco2<e-2){comp='PaCO₂ abaixo do esperado → alcalose respiratória associada';cc='warn';dx.push('alcalose respiratória')}else comp='Compensação adequada → acidose metabólica PURA';dx.unshift('Acidose metabólica')}
+  if(isALM&&!isALR){const e=0.7*hco3+21;form=`PaCO₂ esperada = 0,7 × ${f(hco3,1)} + 21 = ${f(e,0)} ± 2 (medida ${f(pco2,0)})`;if(pco2>e+2){comp='PaCO₂ acima do esperado → acidose respiratória associada';cc='warn';dx.push('acidose respiratória')}else if(pco2<e-2){comp='PaCO₂ abaixo do esperado → alcalose respiratória associada';cc='warn';dx.push('alcalose respiratória')}else comp='Compensação adequada → alcalose metabólica PURA';dx.unshift('Alcalose metabólica')}
+  if(isAR&&!isAM){const d=(pco2-40)/10,a=24+d,c=24+3.5*d;form=`HCO₃⁻ esperado: agudo ${f(a,0)} · crônico ${f(c,0)} (medido ${f(hco3,1)})`;if(hco3<a-2){comp='HCO₃⁻ abaixo do esperado → acidose metabólica associada';cc='warn';dx.push('acidose metabólica')}else if(hco3<=c+2)comp='Compensação dentro do esperado → acidose respiratória PURA';else{comp='HCO₃⁻ acima do esperado → alcalose metabólica associada';cc='warn';dx.push('alcalose metabólica')}dx.unshift('Acidose respiratória')}
+  if(isALR&&!isALM){const d=(40-pco2)/10,a=24-2*d,c=24-5*d;form=`HCO₃⁻ esperado: agudo ${f(a,0)} · crônico ${f(c,0)} (medido ${f(hco3,1)})`;if(hco3>a+2){comp='HCO₃⁻ acima do esperado → alcalose metabólica associada';cc='warn';dx.push('alcalose metabólica')}else if(hco3>=c-2)comp='Compensação dentro do esperado → alcalose respiratória PURA';else{comp='HCO₃⁻ abaixo do esperado → acidose metabólica associada';cc='warn';dx.push('acidose metabólica')}dx.unshift('Alcalose respiratória')}
+  if(isAM&&isAR){comp='Acidose MISTA (metabólica + respiratória)';cc='bad';dx.push('Acidose mista (metabólica + respiratória)')}
+  if(isALM&&isALR){comp='Alcalose MISTA (metabólica + respiratória)';cc='bad';dx.push('Alcalose mista (metabólica + respiratória)')}
+  if(!prim.length)comp='Não se aplica';
+  if(!acid&&!alc&&prim.length)dx.push(prim[0]);
+  steps.push({t:'4. Compensação esperada',r:comp,c:cc,s:form});
+  let ag=null,agc=null,agAlto=false,delta='';
+  if(na!=null&&cl!=null){ag=na-(cl+hco3);agc=alb!=null&&alb<3.5?ag+2.5*(4-alb):ag;agAlto=agc>12;
+    let s5=`AG = ${na} − (${cl} + ${f(hco3,1)}) = ${f(ag,0)}`+(agc!==ag?` · corrigido pela albumina = ${f(agc,0)}`:'');
+    if(agAlto&&hco3<24){const dr=(agc-12)/(24-hco3);let t,c='ok';if(dr<1){t='Δ/Δ < 1 → acidose com AG normal (hiperclorêmica) associada';c='warn';dx.push('acidose com AG normal associada')}else if(dr<=2)t='Δ/Δ 1–2 → acidose com AG aumentado PURA';else{t='Δ/Δ > 2 → alcalose metabólica associada';c='warn';dx.push('alcalose metabólica associada')}
+      if(dx[0])dx[0]=dx[0].replace('Acidose metabólica','Acidose metabólica com AG aumentado');steps.push({t:'5. Ânion gap e Δ/Δ',r:`AG ${f(agc,0)} (aumentado) · Δ/Δ ${f(dr,2)}`,c,s:s5+`<br>${t}`})}
+    else if(isAM){if(dx[0])dx[0]=dx[0].replace('Acidose metabólica','Acidose metabólica com AG normal (hiperclorêmica)');steps.push({t:'5. Ânion gap',r:`AG ${f(agc,0)} (normal) → perda de bicarbonato`,c:'ok',s:s5})}
+    else steps.push({t:'5. Ânion gap',r:`AG ${f(agc,0)} (${agAlto?'aumentado — AG elevado sem acidemia: acidose mascarada por alcalose?':'normal'})`,c:agAlto?'warn':'ok',s:s5});
+  } else steps.push({t:'5. Ânion gap',r:'Informe Na⁺ e Cl⁻ para calcular',c:'ok',s:''});
+  const oxi=[];
+  if(po2!=null){const pf=po2/fio2;oxi.push(`PaO₂ ${f(po2,0)}: ${po2<60?'hipoxemia grave':po2<80?'hipoxemia':'normal'} · PaO₂/FiO₂ ${f(pf,0)} (${pf<100?'SDRA grave':pf<200?'SDRA moderada':pf<300?'SDRA leve':'normal'})`)}
+  if(lac!=null)oxi.push(`Lactato ${f(lac,1)}: ${lac>4?'grave — hipoperfusão/sepse':lac>2?'elevado':'normal'}`);
+  // correção
+  if(isAM||dx.some(d=>d.startsWith('Acidose metabólica'))){
+    if(agAlto){ddx.push('<b>AG aumentado (GOLD MARK):</b> acidose láctica, cetoacidose (diabética, alcoólica, jejum), uremia, metanol, etilenoglicol, salicilato, metformina.'+(lac!=null&&lac>2?` Lactato ${f(lac,1)} explica ${lac>=agc-12?'a maior parte':'parte'} do gap.`:'')+(gli!=null&&gli>250?` Glicemia ${f(gli,0)}: investigar cetoacidose.`:''));
+      tx.push('Tratar a causa: volume + antibiótico na sepse; insulina + volume + K⁺ na cetoacidose; diálise na uremia e nos tóxicos; fomepizol nos glicóis/metanol.');
+      tx.push('Bicarbonato 8,4% só se pH < 7,10–7,15 com instabilidade ou LRA com pH < 7,20: déficit = 0,3 × peso × BE; repor metade em 30–60 min e reavaliar.');
+      tx.push(`Potássio: ${k!=null&&k>5.3?'hipercalemia — a correção desloca K⁺ para a célula; ECG e tratar se alterado':'tende a cair com a correção — repor se < 4,0'}.`);
+    }else{ddx.push('<b>AG normal (hiperclorêmica):</b> diarreia, ATR, fístulas, SF 0,9% em excesso, acetazolamida. AG urinário: negativo → GI; positivo → renal.');
+      tx.push('Trocar SF por Ringer lactato; repor K⁺; na ATR bicarbonato/citrato oral 1–3 mEq/kg/dia; suspender acetazolamida.')}
+  }
+  if(isALM||dx.some(d=>/alcalose metabólica/i.test(d))){ddx.push('<b>Cl⁻ urinário &lt; 20:</b> vômitos, SNG, diurético tardio. <b>&gt; 20:</b> hiperaldosteronismo, Cushing, Bartter/Gitelman, hipocalemia.');
+    tx.push('Cloreto-responsiva: SF 0,9% + KCl (20–40 mEq/L), suspender diurético, IBP se perda gástrica.');tx.push('Cloreto-resistente: repor K⁺ e Mg²⁺, espironolactona; acetazolamida 250–500 mg se hipervolemia; HCl/diálise se pH > 7,6 refratário.')}
+  if(isAR||dx.some(d=>/acidose respiratória/i.test(d))){ddx.push('<b>Hipoventilação:</b> DPOC/asma grave, depressão do SNC (opioide, BZD), neuromuscular, obesidade-hipoventilação, obstrução, VM inadequada.');
+    tx.push('Via aérea e nível de consciência; naloxona/flumazenil se intoxicação.');tx.push(ph<7.35?'VNI (BiPAP) se pH 7,25–7,35; IOT se pH < 7,25, rebaixamento ou falha da VNI em 1–2 h.':'Otimizar ventilação; broncodilatador + corticoide se broncoespasmo.');tx.push('O₂ alvo 88–92% em retentores; sem bicarbonato (gera CO₂); corrigir fósforo e magnésio.')}
+  if(isALR||dx.some(d=>/alcalose respiratória/i.test(d))){ddx.push('<b>Hiperventilação:</b> dor, ansiedade, sepse precoce, TEP, pneumonia, hipoxemia, salicilato, gestação, hepatopatia, VM excessiva.'+(isAM?' Alcalose respiratória + acidose com AG alto → pensar em salicilato e sepse.':''));
+    tx.push('Tratar a causa; afastar TEP e sepse antes de rotular como ansiedade; na VM reduzir FR/volume corrente.')}
+  if(po2!=null&&po2<60)tx.unshift('Hipoxemia: O₂ titulado (92–96%; 88–92% se retentor); P/F < 300 com infiltrado bilateral → SDRA: VM protetora 6 mL/kg, PEEP, prona se P/F < 150.');
+  if(lac!=null&&lac>4)tx.unshift('Lactato > 4: volume guiado por resposta, culturas e antibiótico precoce se sepse, vasopressor se PAM < 65; repetir lactato em 2–4 h.');
+  if(!prim.length&&!dx.length){ddx.push('Gasometria sem distúrbio ácido-base.');tx.push('Nenhuma correção ácido-base necessária; avaliar oxigenação e clínica.')}
+  const title=dx.length?dx.map((d,i)=>i?d.toLowerCase():d).join(' + '):prim.length?prim.join(' + '):'Equilíbrio ácido-base normal';
+  const sev=ph<7.2||ph>7.6?'bad':(acid||alc)?'warn':'ok';
+  return {title,sev,steps,oxi,ddx,tx,ph,pco2,hco3,agc};
+}
+function runGaso(){
+  const v={};['ph','pco2','hco3','be','po2','sat','fio2','lac','na','cl','k','alb','gli'].forEach(k=>v[k]=num(k));
+  if(v.ph==null||v.pco2==null){$('g-result').innerHTML='<p class="hint" style="color:var(--bad)">Informe pelo menos pH e PaCO₂.</p>';return}
+  const r=interpretGaso(v);
+  $('g-result').innerHTML=`<div class="verdict ${r.sev}"><div class="dxt">${r.title}</div><div class="dxs">pH ${f(r.ph,2)} · PaCO₂ ${f(r.pco2,0)} · HCO₃⁻ ${f(r.hco3,1)}${r.agc!=null?' · AG '+f(r.agc,0):''}${$('g-id').value?' · '+$('g-id').value:''}</div></div>
+  <div class="panel"><p class="sec">5 passos</p>${r.steps.map(s=>`<div class="result ${s.c}"><b>${s.t}: ${s.r}</b>${s.s?`<span>${s.s}</span>`:''}</div>`).join('')}${r.oxi.length?`<p class="sec" style="margin-top:12px">Oxigenação</p>${r.oxi.map(o=>`<div class="result ok"><span>${o}</span></div>`).join('')}`:''}</div>
+  <div class="panel card-r"><p class="sec">Causas prováveis</p><ul class="list">${r.ddx.map(d=>`<li>${d}</li>`).join('')}</ul><p class="sec" style="margin-top:12px">Como corrigir</p><ol class="list">${r.tx.map(d=>`<li>${d}</li>`).join('')}</ol><p class="note">Apoio ao raciocínio. Veja a aba Guia → Distúrbios para o detalhamento de cada correção.</p></div>`;
+  try{const h=JSON.parse(localStorage.getItem('gaso-hist')||'[]');h.unshift({id:$('g-id').value,notes:$('g-notes').value,t:Date.now(),title:r.title,v});localStorage.setItem('gaso-hist',JSON.stringify(h.slice(0,30)))}catch(e){}
+  $('g-result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('g-run').onclick=runGaso;
+function drawHist(){let h=[];try{h=JSON.parse(localStorage.getItem('gaso-hist')||'[]')}catch(e){}
+  $('g-histlist').innerHTML=h.length?h.map((x,i)=>`<button class="histitem" data-h="${i}"><b>${x.title}</b><span>${x.id?x.id+' · ':''}${new Date(x.t).toLocaleString('pt-BR')} · pH ${f(x.v.ph,2)} · PaCO₂ ${f(x.v.pco2,0)}</span></button>`).join('')+'<button class="btn ghost" id="g-histclear">Limpar histórico</button>':'<p class="hint">Nenhum item no histórico até o momento. As gasometrias calculadas aparecerão aqui.</p>';}
+$('g-histlist').onclick=e=>{if(e.target.id==='g-histclear'){try{localStorage.removeItem('gaso-hist')}catch(x){}drawHist();return}
+  const b=e.target.closest('[data-h]');if(!b)return;let h=[];try{h=JSON.parse(localStorage.getItem('gaso-hist')||'[]')}catch(x){}const x=h[b.dataset.h];if(!x)return;
+  for(const k in x.v)$(k).value=x.v[k]==null?'':x.v[k];$('g-id').value=x.id||'';$('g-notes').value=x.notes||'';$('g-seg').querySelector('[data-tab=g-calc]').click();runGaso()};
+
+/* ---------- exames: ver app-ai.js ---------- */
+function mdLite(t){const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#+\s*(.+)$/gm,'<h4>$1</h4>').replace(/^[-•]\s+/gm,'• ')}
+
+/* ---------- calculadoras ---------- */
+const CALC=window.CALC||[];
+const nrm=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function calcList(q=''){const ql=nrm(q);$('calc-list').innerHTML=CALC.filter(c=>!ql||nrm(c.n+' '+c.s).includes(ql)).map(c=>`<button class="item" data-calc="${c.id}"><div><b>${c.n}</b><span>${c.s}</span></div></button>`).join('')||'<p class="hint">Nenhuma calculadora encontrada.</p>'}
+calcList();$('calc-q').addEventListener('input',e=>calcList(e.target.value));
+$('calc-list').onclick=e=>{const b=e.target.closest('[data-calc]');if(!b)return;openCalc(CALC.find(c=>c.id===b.dataset.calc))};
+function openCalc(c){$('c-title').textContent=c.n;$('c-sub').textContent=c.s;
+  $('c-fields').innerHTML=c.fields.map(([id,l,d,t,o])=>`<div class="field"><label for="c-${id}">${l}</label>${t==='select'?`<select id="c-${id}">${o.split('|').map(x=>`<option ${x===d?'selected':''}>${x}</option>`).join('')}</select>`:t==='date'?`<input id="c-${id}" type="date" value="${d||''}">`:`<input id="c-${id}" type="number" step="any" value="${d}" inputmode="decimal">`}</div>`).join('');
+  const run=()=>{const v={};let miss=false;for(const [id,,d,t]of c.fields){const el=$('c-'+id);if(t==='select'||t==='date')v[id]=el.value;else{const x=parseFloat(el.value);v[id]=isNaN(x)?(d===''?null:NaN):x;if(isNaN(x)&&d!=='')miss=true}}
+    if(miss){$('c-out').innerHTML='<p class="hint">Preencha os campos numéricos.</p>';return}
+    $('c-out').innerHTML='<div class="rows">'+c.run(v).map(([k,val,cl])=>`<div class="row"><div class="k">${k}</div><div class="v ${cl||''}" style="white-space:normal;text-align:right;max-width:60%">${val}</div></div>`).join('')+'</div>'};
+  $('c-fields').oninput=run;run();go('s-calc-one')}
+
+/* ---------- scores ---------- */
+const SCORE=window.SCORES||[];
+function scoreList(q=''){const ql=nrm(q);const rows=SCORE.filter(c=>!ql||nrm(c.n+' '+c.s).includes(ql));const pin=rows.filter(c=>c.pin),rest=rows.filter(c=>!c.pin).sort((a,b)=>a.n.localeCompare(b.n,'pt'));
+  const item=c=>`<button class="item" data-score="${c.id}"><div><b>${c.n}</b><span>${c.s}</span></div></button>`;
+  $('score-list').innerHTML=(pin.length?'<p class="cat">Fixados</p>'+pin.map(item).join(''):'')+(rest.length?'<p class="cat">Todos</p>'+rest.map(item).join(''):'')||'<p class="hint">Nenhum score encontrado.</p>'}
+scoreList();$('score-q').addEventListener('input',e=>scoreList(e.target.value));
+$('score-list').onclick=e=>{const b=e.target.closest('[data-score]');if(!b)return;openScore(SCORE.find(c=>c.id===b.dataset.score))};
+function openScore(c){$('sc-title').textContent=c.n;$('sc-sub').textContent=c.s;$('sc-ref').textContent=c.ref?'Referência: '+c.ref:'';let h='';
+  (c.fields||[]).forEach(([id,l,d])=>h+=`<div class="sc-field"><label for="sf-${id}">${l}</label><input id="sf-${id}" data-f="${id}" type="number" step="any" value="${d}" inputmode="decimal"></div>`);
+  (c.groups||[]).forEach((g,gi)=>{h+=`<div class="sc-group"><p class="sec">${g.t}</p>`+g.opts.map(([l,p],i)=>`<label class="check"><input type="radio" name="g${gi}" data-g="${gi}" value="${i}" ${i===0?'checked':''}>${l}<em>${p>=0?'+':''}${String(p).replace('.',',')}</em></label>`).join('')+'</div>'});
+  if(c.items&&c.items.length)h+='<div class="sc-group"><p class="sec">Marque o que se aplica</p>'+c.items.map(([l,p],i)=>`<label class="check"><input type="checkbox" data-i="${i}" value="${p}">${l}<em>${p>=0?'+':''}${String(p).replace('.',',')}</em></label>`).join('')+'</div>';
+  $('sc-items').innerHTML=h;
+  const run=()=>{const v={};let miss=false;(c.fields||[]).forEach(([id])=>{const x=parseFloat($('sf-'+id).value);v[id]=x;if(isNaN(x))miss=true});
+    const gsel=(c.groups||[]).map((g,gi)=>parseInt($('sc-items').querySelector(`input[data-g="${gi}"]:checked`)?.value??0));const isel=(c.items||[]).map((it,i)=>$('sc-items').querySelector(`input[data-i="${i}"]`).checked);
+    let sum=0;(c.groups||[]).forEach((g,gi)=>sum+=g.opts[gsel[gi]][1]);(c.items||[]).forEach((it,i)=>{if(isel[i])sum+=it[1]});
+    if(miss){$('sc-out').innerHTML='<p class="hint">Preencha os campos numéricos.</p>';return}
+    const sc=c.calc?c.calc(sum,v,gsel,isel):sum;let r;try{r=c.out(sc,v,gsel,isel)}catch(e){r=['warn','Não foi possível calcular com estes valores']}
+    const show=Number.isFinite(sc)?(Math.abs(sc-Math.round(sc))<1e-9?String(sc):f(sc,2)):'—';
+    $('sc-out').innerHTML=`<div class="big">${show}</div>${res(r[0],r[1])}`};
+  $('sc-items').onchange=run;$('sc-items').oninput=run;run();go('s-score-one')}
+
+/* ---------- critérios diagnósticos ---------- */
+const CRIT=window.CRITERIA||[];
+function critList(q=''){const ql=nrm(q);const rows=CRIT.filter(c=>!ql||nrm(c.n+' '+c.s).includes(ql));const pin=rows.filter(c=>c.pin),rest=rows.filter(c=>!c.pin).sort((a,b)=>a.n.localeCompare(b.n,'pt'));
+  const item=c=>`<button class="item" data-crit="${c.id}"><div><b>${c.n}</b><span>${c.s}</span></div></button>`;
+  $('crit-list').innerHTML=(pin.length?'<p class="cat">Fixados</p>'+pin.map(item).join(''):'')+(rest.length?'<p class="cat">Todos</p>'+rest.map(item).join(''):'')||'<p class="hint">Nenhum critério encontrado.</p>'}
+critList();$('crit-q').addEventListener('input',e=>critList(e.target.value));
+$('crit-list').onclick=e=>{const b=e.target.closest('[data-crit]');if(!b)return;openCrit(CRIT.find(c=>c.id===b.dataset.crit))};
+function openCrit(c){$('cr-title').textContent=c.n;$('cr-sub').textContent=c.s;$('cr-ref').textContent=c.ref?'Referência: '+c.ref:'';
+  $('cr-secs').innerHTML=c.sec.map((sec,si)=>{const single=c.max&&c.max[si]===1;return `<div class="panel"><p class="sec">${sec.t}</p>`+(single?`<label class="check"><input type="radio" name="cs${si}" data-s="${si}" value="-1" checked>Nenhum<em>0</em></label>`:'')+sec.items.map(([l,p],i)=>`<label class="check"><input type="${single?'radio':'checkbox'}" name="cs${si}" data-s="${si}" value="${i}">${l}<em>${p>=0?'+':''}${p}</em></label>`).join('')+'</div>'}).join('');
+  const run=()=>{const sums=[],counts=[];c.sec.forEach((sec,si)=>{let sm=0,ct=0;$('cr-secs').querySelectorAll(`input[data-s="${si}"]:checked`).forEach(inp=>{const i=parseInt(inp.value);if(i>=0){sm+=sec.items[i][1];ct++}});sums.push(sm);counts.push(ct)});
+    const total=sums.reduce((a,b)=>a+b,0);let r;try{r=c.rule(sums,total,counts)}catch(e){r=['warn','Erro ao avaliar']}
+    $('cr-out').innerHTML=res(r[0],r[1])};
+  $('cr-secs').onchange=run;run();go('s-crit-one')}
+
+/* ---------- semiologia ---------- */
+const SM=window.SEMIO||[];let smSpec=null;
+function smList(q=''){const ql=nrm(q);let h='';
+  if(ql){const hits=[];SM.forEach((sp,si)=>sp.t.forEach((tp,ti)=>{if(nrm(sp.n+' '+tp.t+' '+tp.s+' '+tp.dx.join(' ')).includes(ql))hits.push([si,ti,sp,tp])}));
+    h=hits.length?hits.map(([si,ti,sp,tp])=>`<button class="item" data-sm="${si}" data-tp="${ti}"><div><b>${tp.t}</b><span>${sp.n}</span></div></button>`).join(''):'<p class="hint">Nada encontrado.</p>'}
+  else{['Semiologia básica','Semiologia específica'].forEach(cat=>{h+=`<p class="cat">${cat}</p>`+SM.map((sp,si)=>sp.c===cat?`<button class="item" data-sm="${si}"><div><b>${sp.n}</b><span>${sp.t.length} tópicos</span></div></button>`:'').join('')})}
+  $('sm-list').innerHTML=h}
+smList();$('sm-q').addEventListener('input',e=>smList(e.target.value));
+$('sm-list').onclick=e=>{const b=e.target.closest('[data-sm]');if(!b)return;const sp=SM[b.dataset.sm];if(b.dataset.tp!=null){openTopic(sp,sp.t[b.dataset.tp],'s-semio');return}smSpec=sp;$('sm-title').textContent=sp.n;$('sm-sub').textContent=sp.c;
+  $('sm-topics').innerHTML=sp.t.map((tp,i)=>`<button class="item" data-tp="${i}"><div><b>${tp.t}</b><span>${tp.dx.slice(0,3).join(' · ')}…</span></div></button>`).join('');go('s-semio-spec')};
+$('sm-topics').onclick=e=>{const b=e.target.closest('[data-tp]');if(!b||!smSpec)return;openTopic(smSpec,smSpec.t[b.dataset.tp],'s-semio-spec')};
+function openTopic(sp,tp,back){$('st-title').textContent=tp.t;$('st-sub').textContent=sp.n;$('st-s').textContent=tp.s;$('st-dx').innerHTML=tp.dx.map(x=>`<li>${x}</li>`).join('');$('st-ex').innerHTML=tp.ex.map(x=>`<li>${x}</li>`).join('');$('st-tx').innerHTML=tp.tx.map(x=>`<li>${x}</li>`).join('');$('st-ref').textContent=tp.ref||'';$('sm-back').dataset.go=back;go('s-semio-one')}
+
+/* ---------- hidroeletrolíticos ---------- */
+const HID=[
+ {n:'Hiponatremia',s:'Na⁺ < 135',b:`<div class="panel"><p class="sec">Passo a passo</p><ol class="list"><li><b>Sintomas graves</b> (convulsão, coma, vômitos)? → NaCl 3% 100–150 mL em 10–20 min, repetir até 3×; meta +4–6 mEq/L.</li><li><b>Osmolalidade sérica</b>: hipotônica (< 275) é a verdadeira; afastar pseudo (lipídios/proteínas) e hipertônica (glicose, manitol).</li><li><b>Osm urinária</b> < 100 → polidipsia/baixa ingestão de solutos; ≥ 100 → ADH ativo.</li><li><b>Volemia</b>: hipovolêmica (Na⁺u < 30: perdas extrarrenais; > 30: diurético, Addison, perda cerebral de sal); euvolêmica (SIADH, hipotireoidismo, insuficiência adrenal); hipervolêmica (IC, cirrose, nefrótica).</li><li><b>Correção</b>: máx. 8 mEq/L em 24 h (6 se alto risco de desmielinização); se ultrapassar, DDAVP + glicose 5%.</li></ol></div>`},
+ {n:'Hipernatremia',s:'Na⁺ > 145',b:`<div class="panel"><ol class="list"><li>Quase sempre <b>déficit de água</b>: acesso restrito, perdas insensíveis, diurese osmótica, diabetes insipidus (Osm u < 300 com Na⁺ alto).</li><li>Calcular déficit de água livre (ver Calculadoras) e somar perdas contínuas.</li><li>Repor com água VO/SNG ou glicose 5% IV; se hipovolemia instável, cristaloide primeiro.</li><li>Velocidade: ≤ 10 mEq/L em 24 h se crônica; mais rápida se aguda (< 48 h).</li><li>DI central: desmopressina. DI nefrogênico: tiazídico, dieta hipossódica, suspender lítio se possível.</li></ol></div>`},
+ {n:'Hipocalemia',s:'K⁺ < 3,5',b:`<div class="panel"><ol class="list"><li>ECG: onda U, achatamento de T, QT prolongado. <b>Arritmia ou K⁺ < 2,5</b> → reposição IV.</li><li>Causas: perdas GI (vômito, diarreia), renais (diurético, hiperaldosteronismo, ATR, hipomagnesemia), shift (insulina, β2, alcalose).</li><li><b>VO</b>: KCl xarope 6% 10–20 mL 2–4×/dia (cada 1 mL ≈ 0,8 mEq) ou comprimido 600 mg (8 mEq).</li><li><b>IV</b>: KCl 19,1% (2,5 mEq/mL) diluído; periférico ≤ 40 mEq/L e ≤ 10 mEq/h; central até 20 mEq/h com monitor.</li><li>Repor <b>Mg²⁺</b> sempre (sulfato de Mg 50% 2 g IV) — sem Mg a hipocalemia é refratária.</li></ol></div>`},
+ {n:'Hipercalemia',s:'K⁺ > 5,5',b:`<div class="panel"><ol class="list"><li>Confirmar (hemólise, torniquete, leucocitose) e fazer <b>ECG</b> imediatamente.</li><li><b>Estabilizar membrana</b> (se ECG alterado): gluconato de cálcio 10% 10–30 mL IV em 2–5 min; repetir em 5 min se persistir.</li><li><b>Deslocar para a célula</b>: insulina regular 10 U + glicose 50% 50 mL (30 min); salbutamol 10–20 mg inalatório; bicarbonato 50 mEq se acidose.</li><li><b>Remover</b>: furosemida se função renal; resina ou patirômero/ciclosilicato; hemodiálise se refratário, LRA/DRC ou K⁺ > 6,5 com ECG.</li><li>Suspender IECA/BRA, espironolactona, AINE, trimetoprima; dieta.</li></ol></div>`},
+ {n:'Hipocalcemia e hipercalcemia',s:'Cálcio',b:`<div class="panel"><p class="sec">Hipocalcemia</p><ol class="list"><li>Corrigir pela albumina: Ca + 0,8 × (4 − alb); preferir Ca iônico.</li><li>Sintomática (tetania, QT longo, convulsão): gluconato de cálcio 10% 10–20 mL em 10 min, depois infusão 0,5–1,5 mg/kg/h.</li><li>Repor Mg²⁺; vitamina D e cálcio VO na crônica.</li></ol><p class="sec" style="margin-top:12px">Hipercalcemia</p><ol class="list"><li>> 14 mg/dL ou sintomática: SF 0,9% 200–300 mL/h; calcitonina 4 UI/kg 12/12 h (efeito rápido, 48 h); zoledronato 4 mg IV (efeito em 2–4 dias).</li><li>Diálise se LRA grave ou refratária. Investigar hiperparatireoidismo (PTH) e neoplasia (PTHrP).</li></ol></div>`},
+ {n:'Hipomagnesemia',s:'Mg²⁺ < 1,8',b:`<div class="panel"><ol class="list"><li>Causas: álcool, diurético, IBP, diarreia, desnutrição, cisplatina.</li><li>Grave (< 1,2) ou sintomática (arritmia, tetania, torsades): MgSO₄ 50% 2–4 g IV em 10–60 min; torsades 2 g em bolus.</li><li>Leve: 1–2 g IV a cada 6–8 h ou óxido de Mg VO (diarreia limita).</li><li>Metade do Mg infundido é excretado: repor por 3–5 dias; corrigir K⁺ e Ca²⁺ associados.</li></ol></div>`},
+];
+$('hidro-list').innerHTML=HID.map((c,i)=>`<button class="item" data-h="${i}"><div><b>${c.n}</b><span>${c.s}</span></div></button>`).join('');
+$('hidro-list').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;const c=HID[b.dataset.h];$('h-title').textContent=c.n;$('h-sub').textContent=c.s;$('h-body').innerHTML=c.b;go('s-hidro-one')};
+
+/* ---------- guia antimicrobiano ---------- */
+const AB=window.ABX||{pat:[],sys:[]};const ABG=[['Bactérias','#2fa65b','⌬'],['Fungos','#1f8a44','✺'],['Parasitas','#3b7a4a','✱'],['Vírus','#2a5a35','✤']];
+$('ab-seg').onclick=e=>{const b=e.target.closest('[data-abtab]');if(!b)return;$('ab-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));['ab-pat','ab-sys'].forEach(id=>$(id).classList.toggle('active',id===b.dataset.abtab))};
+$('ab-groups').innerHTML=ABG.map(([g,c,ic])=>`<button class="gcard" data-abg="${g}"><span class="ic" style="background:${c}">${ic}</span><b>${g}</b><span class="bar" style="background:${c}"></span></button>`).join('');
+$('ab-syslist').innerHTML=AB.sys.map((sy,i)=>`<button class="item" data-absys="${i}"><div><b>${sy.n}</b><span>${sy.t.map(t=>t.t).join(' · ')}</span></div></button>`).join('');
+$('ab-groups').onclick=e=>{const b=e.target.closest('[data-abg]');if(!b)return;const g=b.dataset.abg;$('abl-title').textContent=g;$('abl-sub').textContent='Patógenos';$('abl-list').innerHTML=AB.pat.filter(p=>p.g===g).map(p=>`<button class="item" data-abp="${p.n}"><div><b>${p.n}</b><span>${p.inf[0]}</span></div></button>`).join('');go('s-abx-list')};
+$('ab-syslist').onclick=e=>{const b=e.target.closest('[data-absys]');if(!b)return;const sy=AB.sys[b.dataset.absys];$('abl-title').textContent=sy.n;$('abl-sub').textContent='Síndromes';$('abl-list').innerHTML=sy.t.map((t,i)=>`<button class="item" data-abs="${b.dataset.absys}" data-abt="${i}"><div><b>${t.t}</b><span>${t.pat}</span></div></button>`).join('');go('s-abx-list')};
+$('abl-list').onclick=e=>{const b=e.target.closest('[data-abp],[data-abs]');if(!b)return;if(b.dataset.abp)openPat(AB.pat.find(p=>p.n===b.dataset.abp),'s-abx-list');else openSyn(AB.sys[b.dataset.abs].t[b.dataset.abt],AB.sys[b.dataset.abs].n,'s-abx-list')};
+function openPat(p,back){$('abo-title').textContent=p.n;$('abo-sub').textContent=p.g;$('abo-back').dataset.go=back;
+  $('abo-body').innerHTML=`<div class="panel card-t"><p class="sec">Características</p><p style="font-size:.9rem">${p.k}</p></div><div class="panel card-y"><p class="sec">Infecções</p><ul class="list">${p.inf.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="panel card-g"><p class="sec">Tratamento de 1ª linha</p><ul class="list">${p.first.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="panel card-b"><p class="sec">Alternativas</p><ul class="list">${p.alt.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="panel"><p class="sec">Duração</p><p style="font-size:.9rem">${p.dur}</p></div><div class="panel card-r"><p class="sec">Observações</p><ul class="list">${p.obs.map(x=>`<li>${x}</li>`).join('')}</ul></div><p class="note">Referências: ${p.ref}</p>`;go('s-abx-one')}
+function openSyn(t,sys,back){$('abo-title').textContent=t.t;$('abo-sub').textContent=sys;$('abo-back').dataset.go=back;
+  $('abo-body').innerHTML=`<div class="panel card-t"><p class="sec">Patógenos prováveis</p><p style="font-size:.9rem">${t.pat}</p></div>${t.amb&&t.amb!=='—'?`<div class="panel card-g"><p class="sec">Ambulatorial / leve</p><p style="font-size:.9rem;line-height:1.5">${t.amb.replace(/ · /g,'<br>• ')}</p></div>`:''}<div class="panel card-r"><p class="sec">Hospitalar / grave</p><p style="font-size:.9rem;line-height:1.5">${t.hosp.replace(/ · /g,'<br>• ')}</p></div><div class="panel"><p class="sec">Duração</p><p style="font-size:.9rem">${t.dur}</p></div><p class="note">Referências: ${t.ref}. Ajustar à epidemiologia local (CCIH) e função renal/hepática.</p>`;go('s-abx-one')}
+$('ab-q').addEventListener('input',e=>{const q=nrm(e.target.value);if(!q){$('ab-groups').querySelectorAll('.item').forEach(x=>x.remove());return}
+  const hits=AB.pat.filter(p=>nrm(p.n+' '+p.inf.join(' ')+' '+p.k).includes(q)).map(p=>`<button class="item" data-abp="${p.n}"><div><b>${p.n}</b><span>${p.g}</span></div></button>`).join('')+AB.sys.flatMap((sy,si)=>sy.t.map((t,ti)=>nrm(t.t+' '+t.pat+' '+sy.n).includes(q)?`<button class="item" data-abs="${si}" data-abt="${ti}"><div><b>${t.t}</b><span>${sy.n}</span></div></button>`:'')).join('');
+  $('abl-title').textContent='Resultados';$('abl-sub').textContent=e.target.value;$('abl-list').innerHTML=hits||'<p class="hint">Nada encontrado.</p>';if(hits)go('s-abx-list')});
+
+/* ---------- assistente de reanimação ---------- */
+let RC=null,rcTimer=null,rcAC=null;
+function beep(n=1){try{rcAC=rcAC||new (window.AudioContext||window.webkitAudioContext)();for(let i=0;i<n;i++){const o=rcAC.createOscillator(),g=rcAC.createGain();o.connect(g);g.connect(rcAC.destination);o.frequency.value=880;g.gain.value=.3;o.start(rcAC.currentTime+i*.25);o.stop(rcAC.currentTime+i*.25+.15)}}catch(e){}if(navigator.vibrate)navigator.vibrate([200,100,200])}
+const mmss=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function rcLog(t){RC.log.push([Date.now()-RC.t0,t]);$('rc-log').innerHTML=RC.log.map(([ms,x])=>`<div>${mmss(ms)} — ${x}</div>`).reverse().join('')}
+function rcDoses(){const ped=RC.ped,kg=RC.kg||0;const bi=$('rc-desf').value==='bi';
+  const j=ped?(RC.shocks===0?2*kg:RC.shocks===1?4*kg:Math.min(10*kg,Math.max(4*kg,4*kg)))+' J':(bi?'200 J':'360 J');
+  const epi=ped?`${f(0.01*kg,2)} mg (${f(0.1*kg,1)} mL de 1:10.000)`:'1 mg (10 mL de 1:10.000)';
+  const amio=ped?`${f(5*kg,0)} mg (5 mg/kg)`:(RC.amio===0?'300 mg':'150 mg');
+  const lido=ped?`${f(1*kg,0)} mg (1 mg/kg)`:(RC.lido===0?'1–1,5 mg/kg (≈ 100 mg)':'0,5–0,75 mg/kg');
+  $('rc-j').textContent=j;$('rc-epid').textContent=epi;$('rc-amiod').textContent=amio;$('rc-lidod').textContent=lido;return{j,epi,amio,lido}}
+function rcNow(){const sh=['FV','TVSP'].includes(RC.rhythm);let t='';
+  if(sh){t=`<b>Ritmo chocável.</b> RCP de alta qualidade; carregar o desfibrilador no fim do ciclo e <b>chocar</b> ao checar o ritmo. `;if(RC.shocks>=1&&RC.epi===0)t+='Após o 2º choque: <b>adrenalina</b>. ';if(RC.shocks>=2&&RC.amio===0)t+='Após o 3º choque: <b>amiodarona 300 mg</b> (ou lidocaína). ';if(RC.shocks>=4&&RC.amio===1)t+='Após o 5º choque: <b>amiodarona 150 mg</b>. '}
+  else{t=`<b>Ritmo não chocável.</b> RCP contínua; <b>adrenalina o mais cedo possível</b> e a cada 3–5 min; buscar e tratar 5H/5T. `;if(RC.epi===0)t+='<b>Adrenalina ainda não administrada!</b> '}
+  if(!RC.airway)t+='Considerar via aérea avançada (máscara laríngea/IOT) sem interromper compressões; capnografia. ';
+  t+='Trocar o compressor a cada 2 min. Acesso EV/IO.';$('rc-now').innerHTML=t}
+function rcNext(){const now=Date.now();const rows=[];
+  const epiDue=RC.lastEpi?RC.lastEpi+3*60000-now:null;rows.push(['Adrenalina',RC.epi===0?'agora (não chocável) / após 2º choque':epiDue>0?'em '+mmss(epiDue)+' (janela 3–5 min)':'AGORA (≥ 3 min)',RC.epi===0||epiDue<=0?'bad':'ok']);
+  if(['FV','TVSP'].includes(RC.rhythm)){rows.push(['Amiodarona',RC.amio===0?'após 3º choque (300 mg)':RC.amio===1?'após 5º choque (150 mg)':'dose máxima atingida',RC.shocks>=2&&RC.amio===0||RC.shocks>=4&&RC.amio===1?'bad':'ok']);rows.push(['Choque',`${RC.shocks} aplicado(s) · próximo ao checar ritmo`,''])}
+  rows.push(['Checagem de ritmo','a cada 2 min (fim do ciclo)','']);
+  $('rc-next').innerHTML=rows.map(([k,v,c])=>`<div class="row"><div class="k">${k}</div><div class="v ${c}" style="white-space:normal;text-align:right">${v}</div></div>`).join('')}
+function rcTick(){if(!RC)return;const now=Date.now();$('rc-total').textContent=mmss(now-RC.t0);const rem=RC.cycleEnd-now;$('rc-cycle').textContent=mmss(rem);$('rc-cyc').textContent=RC.cycle;
+  const head=document.querySelector('.rcp-head');const epiDue=RC.lastEpi&&now-RC.lastEpi>=3*60000;
+  if(rem<=0){if(!RC.cycleAlerted){RC.cycleAlerted=true;beep(3);$('rc-alert').hidden=false;$('rc-alert').innerHTML='<b>Fim do ciclo:</b> checar ritmo (≤ 10 s) — pulso só se ritmo organizado. '+(['FV','TVSP'].includes(RC.rhythm)?'Se chocável: <b>choque</b> e reiniciar RCP.':'Se continua não chocável: reiniciar RCP e adrenalina conforme o tempo.')}head.className='rcp-head due'}
+  else if(rem<=15000){head.className='rcp-head warn';if(!RC.preAlerted){RC.preAlerted=true;beep(1)}}else head.className='rcp-head';
+  if(epiDue&&!RC.epiAlerted){RC.epiAlerted=true;beep(2)}
+  rcNext()}
+function rcStart(r){const ped=$('rc-tipo').value==='ped';const kg=num('rc-peso');if(ped&&!(kg>0)){$('rc-peso').focus();$('rc-peso').style.outline='2px solid var(--bad)';return}
+  RC={t0:Date.now(),rhythm:r,ped,kg,cycle:1,cycleEnd:Date.now()+120000,shocks:0,epi:0,amio:0,lido:0,lastEpi:null,airway:false,log:[],cycleAlerted:false,preAlerted:false,epiAlerted:false};
+  $('rcp-setup').hidden=true;$('rcp-run').hidden=false;$('rcp-guide').hidden=true;$('rc-rhythm').textContent=r;$('rc-alert').hidden=true;$('rc-log').innerHTML='';
+  rcLog(`Início da RCP — ritmo ${r}${ped?' · pediátrico '+kg+' kg':' · adulto'}`);if(['FV','TVSP'].includes(r))rcLog('Choque indicado imediatamente — aplicar e iniciar RCP');rcDoses();rcNow();rcNext();beep(1);clearInterval(rcTimer);rcTimer=setInterval(rcTick,250);rcTick()}
+document.querySelector('.rhythm').onclick=e=>{const b=e.target.closest('[data-r]');if(b)rcStart(b.dataset.r)};
+$('rc-shock').onclick=()=>{if(!RC)return;const d=rcDoses();RC.shocks++;rcLog(`Choque ${RC.shocks} — ${d.j}`);RC.cycle++;RC.cycleEnd=Date.now()+120000;RC.cycleAlerted=false;RC.preAlerted=false;$('rc-alert').hidden=true;rcDoses();rcNow();rcNext()};
+$('rc-epi').onclick=()=>{if(!RC)return;const d=rcDoses();RC.epi++;RC.lastEpi=Date.now();RC.epiAlerted=false;rcLog(`Adrenalina ${RC.epi}ª dose — ${d.epi} EV/IO + flush 20 mL`);rcNow();rcNext()};
+$('rc-amio').onclick=()=>{if(!RC)return;const d=rcDoses();if(!RC.ped&&RC.amio>=2){rcLog('Amiodarona: dose máxima (450 mg) já administrada');return}RC.amio++;rcLog(`Amiodarona ${RC.amio}ª dose — ${d.amio} EV/IO`);rcDoses();rcNow();rcNext()};
+$('rc-lido').onclick=()=>{if(!RC)return;const d=rcDoses();RC.lido++;rcLog(`Lidocaína ${RC.lido}ª dose — ${d.lido} EV/IO`);rcDoses();rcNow()};
+$('rc-check').onclick=()=>{if(!RC)return;$('rc-alert').hidden=false;$('rc-alert').className='box y';$('rc-alert').innerHTML='<b>Checagem de ritmo (≤ 10 s):</b> qual é o ritmo agora?<div class="rhythm" style="margin-top:8px"><button data-nr="FV" class="r-shock">FV</button><button data-nr="TVSP" class="r-shock">TV sem pulso</button><button data-nr="AESP" class="r-non">AESP</button><button data-nr="Assistolia" class="r-non">Assistolia</button><button data-nr="RCE" style="grid-column:1/-1;border-color:var(--ok);color:var(--ok)">Ritmo organizado com pulso (RCE)</button></div>';
+  $('rc-alert').querySelector('.rhythm').onclick=e=>{const b=e.target.closest('[data-nr]');if(!b)return;const nr=b.dataset.nr;if(nr==='RCE'){$('rc-rosc').click();return}
+    if(nr!==RC.rhythm){rcLog(`Ritmo mudou: ${RC.rhythm} → ${nr}`);RC.rhythm=nr;$('rc-rhythm').textContent=nr}else rcLog(`Checagem: ${nr} — manter RCP`);
+    RC.cycle++;RC.cycleEnd=Date.now()+120000;RC.cycleAlerted=false;RC.preAlerted=false;$('rc-alert').hidden=true;$('rc-alert').className='box r';rcDoses();rcNow();rcNext()}};
+$('rc-airway').onclick=()=>{if(!RC)return;RC.airway=true;rcLog('Via aérea avançada — compressões contínuas, 1 ventilação a cada 6 s, capnografia');rcNow()};
+$('rc-rosc').onclick=()=>{if(!RC)return;rcLog('RCE — retorno da circulação espontânea');clearInterval(rcTimer);document.querySelector('.rcp-head').className='rcp-head';$('rc-alert').hidden=false;$('rc-alert').className='box g';$('rc-alert').innerHTML=`<b>Pós-RCE (${mmss(Date.now()-RC.t0)} de RCP, ${RC.shocks} choque(s), ${RC.epi} adrenalina):</b><br>• Via aérea/ventilação: SatO₂ 92–98%, PaCO₂ 35–45, VC 6–8 mL/kg<br>• PA: PAS > 90 / PAM ≥ 65 — volume, noradrenalina${RC.ped?' (0,05–0,3 mcg/kg/min)':' 0,1–0,5 mcg/kg/min'}<br>• ECG 12 derivações; cateterismo se IAMCSST; ecocardiograma<br>• Controle de temperatura 32–37,5 °C ≥ 24 h, evitar febre 72 h<br>• Glicemia 140–180; eletrólitos; tratar causa (5H/5T)<br>• EEG se não responsivo; prognóstico ≥ 72 h (não sedado)<br>• Evitar hiperóxia e hiperventilação`;$('rc-now').innerHTML='RCE alcançado. Siga o checklist acima e transfira para UTI.'};
+$('rc-stop').onclick=()=>{if(!RC)return;rcLog(`Encerrado — tempo total ${mmss(Date.now()-RC.t0)}`);clearInterval(rcTimer);const txt=RC.log.map(([ms,x])=>mmss(ms)+' — '+x).join('\n');$('rc-now').innerHTML='Atendimento encerrado. O registro está abaixo; copie para o prontuário.';setTimeout(()=>{$('rcp-setup').hidden=false;$('rcp-guide').hidden=false},100)};
+$('rc-copy').onclick=async()=>{if(!RC)return;const txt='RCP — '+new Date(RC.t0).toLocaleString('pt-BR')+'\n'+RC.log.map(([ms,x])=>mmss(ms)+' — '+x).join('\n');try{await navigator.clipboard.writeText(txt);$('rc-copy').textContent='Copiado ✓';setTimeout(()=>$('rc-copy').textContent='Copiar registro',1500)}catch(e){const r=document.createRange();r.selectNodeContents($('rc-log'));getSelection().removeAllRanges();getSelection().addRange(r)}};
+
+/* ---------- doses pediátricas ---------- */
+const PD=window.PEDS||[];
+function pedList(q=''){
+  const ql=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const rows=PD.map((d,i)=>({d,i})).filter(({d})=>!ql||norm(d.n).includes(ql)||norm(d.c).includes(ql)||norm(d.i).includes(ql));
+  let h='',cat='';
+  rows.forEach(({d,i})=>{if(d.c!==cat){cat=d.c;h+=`<p class="cat">${cat}</p>`}h+=`<button class="item" data-ped="${i}"><div><b>${d.n}</b><span>${d.i}</span></div></button>`});
+  $('ped-list').innerHTML=h||'<p class="hint">Nenhum medicamento encontrado.</p>';
+}
+pedList();
+$('ped-q').addEventListener('input',e=>pedList(e.target.value));
+$('ped-list').onclick=e=>{const b=e.target.closest('[data-ped]');if(!b)return;openPed(PD[b.dataset.ped])};
+let curPed=null;
+function fmtQ(v,u){
+  if(u==='gotas'||u==='jatos')return String(Math.round(v));
+  if(u==='UI')return Math.round(v).toLocaleString('pt-BR');
+  if(u==='mL')return (v<1?v.toFixed(2):v<10?v.toFixed(1):v.toFixed(0)).replace('.',',');
+  return (v<10?v.toFixed(1):v.toFixed(0)).replace('.',',').replace(',0','');
+}
+function calcPres(p,kg){
+  if(p.fx)return `<div class="fx">${p.fx}</div>`;
+  const ds=Array.isArray(p.d)?p.d:[p.d,p.d];
+  let lo=ds[0]*kg/p.per,hi=ds[1]*kg/p.per,cap=false;
+  if(p.mn!=null){lo=Math.max(lo,p.mn);hi=Math.max(hi,p.mn)}
+  if(p.m!=null&&hi>p.m){hi=p.m;cap=true;if(lo>p.m)lo=p.m}
+  const same=Math.abs(lo-hi)<1e-9||fmtQ(lo,p.u)===fmtQ(hi,p.u);
+  const q=same?fmtQ(hi,p.u):`${fmtQ(lo,p.u)} a ${fmtQ(hi,p.u)}`;
+  const mgkg=Array.isArray(p.d)?`${String(ds[0]).replace('.',',')}–${String(ds[1]).replace('.',',')}`:String(p.d).replace('.',',');
+  return `<div class="dose"><mark class="${cap?'cap':''}">${q} ${p.u}</mark> ${p.v}</div>
+  <ul>${p.m!=null?`<li>dose máxima de ${fmtQ(p.m,p.u)} ${p.u} por dose${cap?' <b style="color:var(--bad)">(limitada pela dose máxima)</b>':''}</li>`:''}
+  <li>dose de referência: ${mgkg} ${p.u==='UI'?'UI':'mg'}/kg/dose</li>${(p.n||[]).map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+function renderPed(){
+  const kg=parseFloat($('pd-peso').value);const d=curPed;if(!d)return;
+  if(!(kg>0)){$('pd-pres').innerHTML='<p class="hint">Informe o peso da criança.</p>';return}
+  $('pd-pres').innerHTML=d.p.map(p=>`<div class="pres"><h3>${p.t}</h3>${calcPres(p,kg)}</div>`).join('');
+}
+function openPed(d){curPed=d;$('pd-title').textContent=d.n;$('pd-cat').textContent=d.c;$('pd-age').textContent='Idade mínima: '+d.a;
+  $('pd-ind').textContent=d.i;$('pd-obs').innerHTML=d.o.map(o=>`<li>${o}</li>`).join('');$('rx-pres').dataset.n='';renderPed();renderRx();go('s-ped-one')}
+$('pd-peso').addEventListener('input',()=>{renderPed();renderRx()});
+function rxOral(p){return !/EV|IM|IO|SC|nebuliza|infus|inala|aeross|jato|retal|intranasal|endotraqueal/i.test(p.t+' '+(p.v||''))||/via oral/i.test(p.v||'')}
+function renderRx(){const d=curPed;if(!d)return;const kg=parseFloat($('pd-peso').value)||0;const sel=$('rx-pres');
+  if(sel.options.length!==d.p.length||sel.dataset.n!==d.n){sel.innerHTML=d.p.map((p,i)=>`<option value="${i}" ${rxOral(p)&&![...sel.options].length?'':''}>${p.t}</option>`).join('');sel.dataset.n=d.n;const first=d.p.findIndex(rxOral);sel.value=first>=0?first:0}
+  const p=d.p[sel.value];const days=parseInt($('rx-days').value)||0;
+  let qty='';if(!p.fx&&kg>0){const ds=Array.isArray(p.d)?p.d:[p.d,p.d];let lo=ds[0]*kg/p.per,hi=ds[1]*kg/p.per;if(p.mn!=null){lo=Math.max(lo,p.mn);hi=Math.max(hi,p.mn)}if(p.m!=null){hi=Math.min(hi,p.m);lo=Math.min(lo,p.m)}qty=fmtQ(lo,p.u)===fmtQ(hi,p.u)?fmtQ(hi,p.u):`${fmtQ(lo,p.u)} a ${fmtQ(hi,p.u)}`;}
+  const via=/via oral/i.test(p.v||'')?'Uso oral':/IM|EV|SC/i.test(p.v||'')?'Uso injetável':/nebuliza|inala|aeross|jato/i.test(p.t+' '+(p.v||''))?'Uso inalatório':'Uso conforme orientação';
+  const inst=p.fx?`Administrar conforme a idade: ${p.fx.replace(/<[^>]+>/g,'')}.`:`Dar ${qty} ${p.u} ${p.v}${days?`, por ${days} dia${days>1?'s':''}`:''}.`;
+  const txt=`${via}
+
+1) ${d.n} — ${p.t.replace(/ — .*$/,'')} ………… 1 unidade
+   ${inst}${p.m!=null&&!p.fx?`
+   Não ultrapassar ${fmtQ(p.m,p.u)} ${p.u} por dose.`:''}
+
+Peso: ${kg?kg+' kg':'____ kg'}   Data: ____/____/______
+
+______________________________
+Médico(a) — CRM`;
+  $('rx-text').textContent=txt;}
+$('rx-pres').onchange=renderRx;$('rx-days').oninput=renderRx;
+$('rx-copy').onclick=async()=>{const t=$('rx-text').textContent;try{await navigator.clipboard.writeText(t);$('rx-copy').textContent='Copiado ✓';setTimeout(()=>$('rx-copy').textContent='Copiar receita',1500)}catch(e){const r=document.createRange();r.selectNodeContents($('rx-text'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('rx-copy').textContent='Selecionado — use Copiar'}};
+
+/* ---------- infusões ---------- */
+const INF=window.INF||[];let curInf=null;
+const PT={};function ptUpdate(){['peso','alt','pas','pad','fc','sat','cr'].forEach(k=>PT[k]=num('pt-'+k));PT.sexo=$('pt-sexo').value;
+  const out=[];if(PT.alt){const pp=(PT.sexo==='F'?45.5:50)+0.91*(PT.alt-152.4);PT.pp=pp;out.push(`Peso predito ${f(pp,1)} kg (VC 6 mL/kg = ${f(pp*6,0)} mL)`)}else PT.pp=null;
+  if(PT.pas&&PT.pad){PT.pam=(PT.pas+2*PT.pad)/3;out.push(`PAM ${f(PT.pam,0)} mmHg${PT.pam<65?' — abaixo da meta de 65':''}`)}else PT.pam=null;
+  if(PT.cr&&PT.peso)out.push(`Creatinina ${f(PT.cr,1)}: ajustar fármacos de excreção renal`);
+  $('pt-out').textContent=out.join(' · ');if(PT.peso&&$('in-peso'))$('in-peso').value=PT.peso;if(curInf)infCalc()}
+['pt-peso','pt-alt','pt-sexo','pt-pas','pt-pad','pt-fc','pt-sat','pt-cr'].forEach(id=>$(id).addEventListener('input',ptUpdate));
+$('i-seg').onclick=e=>{const b=e.target.closest('[data-itab]');if(!b)return;$('i-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));['i-list','i-conv'].forEach(id=>$(id).classList.toggle('active',id===b.dataset.itab))};
+function infList(q=''){const ql=nrm(q);$('inf-list').innerHTML=INF.map((d,i)=>({d,i})).filter(({d})=>!ql||nrm(d.n).includes(ql)).map(({d,i})=>`<button class="item" data-inf="${i}"><div><b>${d.n}</b><span>${d.rng[0]}–${d.rng[1]} ${d.u}</span></div></button>`).join('')}
+infList();$('inf-q').addEventListener('input',e=>infList(e.target.value));
+$('inf-list').onclick=e=>{const b=e.target.closest('[data-inf]');if(!b)return;openInf(INF[b.dataset.inf])};
+function openInf(d){curInf=d;$('in-title').textContent=d.n;$('in-amp').textContent=d.amp;$('in-ampbox').textContent=d.amp;$('in-asp').textContent=d.asp||'';$('in-prep').textContent='Concentração final: '+d.prep;$('in-ev').textContent=d.ev||'';if(PT.peso)$('in-peso').value=PT.peso;$('in-dosel').textContent='Dose ('+d.u+')';$('in-dose').value=d.def;$('in-conc').value=d.conc;$('in-mlh').value='';$('in-pesof').style.display=d.kg?'':'none';$('in-notas').innerHTML=d.notas.map(n=>`<li>${n}</li>`).join('');infCalc();go('s-inf-one')}
+function infFactor(d){const u=d.u;const perMin=/\/min$/.test(u);const kgu=/\/kg\//.test(u);const base=u.split('/')[0];const concUnit=/^(mcg)/.test(base)&&/mg/.test(d.u)?1:1;
+  // quantidade por hora na unidade da concentração
+  return {perMin,kgu,base}}
+function infCalc(src){const d=curInf;if(!d)return;const peso=num('in-peso')||70,conc=num('in-conc')||d.conc;const {perMin,kgu}=infFactor(d);
+  const mult=(perMin?60:1)*(kgu?peso:1);
+  if(src==='mlh'){const ml=num('in-mlh');if(ml==null)return;$('in-dose').value=+(ml*conc/mult).toFixed(3)}
+  const dose=num('in-dose');if(dose==null){$('in-out').innerHTML='<p class="hint">Informe a dose.</p>';return}
+  const mlh=dose*mult/conc;if(src!=='mlh')$('in-mlh').value=+mlh.toFixed(2);
+  const ok=dose>=d.rng[0]&&dose<=d.rng[1];
+  howto(d,peso,conc,mult);$('in-out').innerHTML=`<div class="result ${ok?'ok':'warn'}"><b>${f(mlh,1)} mL/h</b><span>${d.n} · ${String(dose).replace('.',',')} ${d.u}${d.kg?' · '+peso+' kg':''} · ${conc} ${d.u.split('/')[0]}/mL</span></div><p class="hint">Faixa usual ${String(d.rng[0]).replace('.',',')}–${String(d.rng[1]).replace('.',',')} ${d.u}${ok?'':' — <b style="color:var(--warn)">dose fora da faixa habitual</b>'}. Em gotas/min (macro): ${f(mlh/3,0)} · microgotas/min: ${f(mlh,0)}.</p>`}
+function howto(d,peso,conc,mult){const lo=d.rng[0]*mult/conc,hi=d.rng[1]*mult/conc,st=d.def*mult/conc;
+  const ctx=[];if(PT.pam!=null&&/noradrenalina|adrenalina|vasopressina|dopamina|dobutamina/i.test(d.n))ctx.push(PT.pam<65?`PAM atual ${f(PT.pam,0)}: iniciar e titular a cada 2–5 min até PAM ≥ 65.`:`PAM ${f(PT.pam,0)} já na meta: manter a menor dose eficaz e reavaliar desmame.`);
+  if(PT.fc&&/esmolol|amiodarona|labetalol|isoproterenol/i.test(d.n))ctx.push(`FC atual ${PT.fc} bpm.`);
+  if(PT.sat&&PT.sat<90&&/propofol|midazolam|fentanil|morfina|remifentanil/i.test(d.n))ctx.push(`SatO₂ ${PT.sat}%: monitorar depressão respiratória.`);
+  if(PT.cr&&PT.cr>1.5&&/morfina|midazolam|vecurônio|pancurônio|milrinona|heparina/i.test(d.n))ctx.push(`Creatinina ${f(PT.cr,1)}: reduzir dose / preferir alternativa sem acúmulo renal.`);
+  $('in-howto').innerHTML=`<ol class="list"><li><b>Preparar:</b> ${d.asp||d.prep}</li><li><b>Iniciar:</b> ${f(lo,1)} mL/h (${String(d.rng[0]).replace('.',',')} ${d.u})${d.def!==d.rng[0]?` — dose usual de início ${f(st,1)} mL/h (${String(d.def).replace('.',',')} ${d.u})`:''}.</li><li><b>Titular:</b> ajustar a cada 5–15 min conforme resposta (vasoativos a cada 2–5 min; sedativos a cada 15–30 min).</li><li><b>Máximo:</b> ${f(hi,1)} mL/h (${String(d.rng[1]).replace('.',',')} ${d.u}); acima disso associar outro agente ou rever o diagnóstico.</li>${ctx.map(c=>`<li>${c}</li>`).join('')}</ol>`}
+['in-peso','in-dose','in-conc'].forEach(id=>$(id).addEventListener('input',()=>infCalc()));$('in-mlh').addEventListener('input',()=>infCalc('mlh'));
+// conversões
+const cv=(a,b,fab,fba)=>{$(a).addEventListener('input',()=>{const x=num(a);if(x!=null)$(b).value=+fab(x).toFixed(3)});$(b).addEventListener('input',()=>{const x=num(b);if(x!=null)$(a).value=+fba(x).toFixed(3)})};
+cv('cv-pct','cv-mgml',x=>x*10,x=>x/10);
+$('cv-mlh').addEventListener('input',()=>{const x=num('cv-mlh');if(x!=null){$('cv-gt').value=+(x/3).toFixed(1);$('cv-mgt').value=x}});$('cv-gt').addEventListener('input',()=>{const x=num('cv-gt');if(x!=null){$('cv-mlh').value=x*3;$('cv-mgt').value=x*3}});$('cv-mgt').addEventListener('input',()=>{const x=num('cv-mgt');if(x!=null){$('cv-mlh').value=x;$('cv-gt').value=+(x/3).toFixed(1)}});
+const cv2=()=>{const d=num('cv-dose'),p=num('cv-peso'),c=num('cv-conc');if(d!=null&&p&&c)$('cv-mlh2').value=+(d*p*60/c).toFixed(2)};['cv-dose','cv-peso','cv-conc'].forEach(id=>$(id).addEventListener('input',cv2));cv2();
+$('cv-mlh2').addEventListener('input',()=>{const m=num('cv-mlh2'),p=num('cv-peso'),c=num('cv-conc');if(m!=null&&p&&c)$('cv-dose').value=+(m*c/(60*p)).toFixed(3)});
+const cv3=()=>{const m=num('cv-mlh3'),c=num('cv-conc3');if(m!=null&&c)$('cv-mcgmin').value=+(m*c/60).toFixed(2)};['cv-mlh3','cv-conc3'].forEach(id=>$(id).addEventListener('input',cv3));cv3();
+$('cv-mcgmin').addEventListener('input',()=>{const x=num('cv-mcgmin'),c=num('cv-conc3');if(x!=null&&c)$('cv-mlh3').value=+(x*60/c).toFixed(2)});
+
+/* ---------- sequência rápida ---------- */
+const RSI=window.RSI||{pre:[],ana:[],ind:[],par:[],presets:[],steps:[]};
+$('r-seg').onclick=e=>{const b=e.target.closest('[data-rtab]');if(!b)return;$('r-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));['r-drugs','r-steps'].forEach(id=>$(id).classList.toggle('active',id===b.dataset.rtab))};
+const fillSel=(id,arr)=>$(id).innerHTML=arr.map((o,i)=>`<option value="${i}">${o.n}</option>`).join('');
+fillSel('r-pre',RSI.pre);fillSel('r-ana',RSI.ana);fillSel('r-ind',RSI.ind);fillSel('r-par',RSI.par);
+$('r-preset').innerHTML=RSI.presets.map((p,i)=>`<option value="${i}">${p.n}</option>`).join('');
+function rsiInfo(){[['r-pre',RSI.pre],['r-ana',RSI.ana],['r-ind',RSI.ind],['r-par',RSI.par]].forEach(([id,arr])=>{const o=arr[$(id).value];$(id+'-i').innerHTML=o&&o.c?`<b>Ampola:</b> ${o.amp}<br><b>Diluição:</b> ${o.dil}<br><b>Uso:</b> ${o.i}<br><span style="color:var(--accent)"><b>Evidência:</b> ${o.ev}</span>`:(o&&o.i?o.i:'')})}
+function applyPreset(){const p=RSI.presets[$('r-preset').value];if(!p)return;$('r-why').textContent=p.why;const set=(id,arr,n)=>{const i=arr.findIndex(o=>o.n===n);$(id).value=i>=0?i:0};set('r-pre',RSI.pre,p.pre);set('r-ana',RSI.ana,p.ana);set('r-ind',RSI.ind,p.ind);set('r-par',RSI.par,p.par);rsiInfo()}
+$('r-preset').onchange=applyPreset;['r-pre','r-ana','r-ind','r-par'].forEach(id=>$(id).onchange=rsiInfo);applyPreset();
+function drawSteps(plan){const P=plan||{};$('r-steplist').innerHTML=`<div class="panel card-p timeline"><h3>7 Ps da sequência rápida${P.kg?' — '+P.kg+' kg':''}</h3>${RSI.steps.map((s,i)=>`<div class="stp"><span class="tm">${s.t}</span><div><b>${s.n}</b>${P.steps&&P.steps[i]?`<div class="box g">${P.steps[i]}</div>`:''}<p class="hint" style="margin-top:4px;color:var(--fg)">${s.d}</p>${s.ev?`<p class="hint" style="color:var(--accent)"><b>Evidência:</b> ${s.ev}</p>`:''}</div></div>`).join('')}<p class="note">Falha de intubação: BVM → máscara laríngea → cricotireoidostomia por punção (criança < 10 anos) ou cirúrgica. Nunca persistir em laringoscopias repetidas com dessaturação.</p></div>`}
+drawSteps();
+$('r-peso').addEventListener('input',()=>{PT.peso=num('r-peso')});
+$('r-run').onclick=()=>{const kg=num('r-peso')||PT.peso,idade=num('r-idade');if(!(kg>0)){$('r-out').innerHTML='<p class="hint" style="color:var(--bad)">Informe o peso.</p>';return}
+  const ped=idade!=null&&idade<12;const lines=[];const S={pre:'',ana:'',ind:'',par:''};
+  [['Pré-droga',RSI.pre[$('r-pre').value],'−3 min','pre'],['Analgesia',RSI.ana[$('r-ana').value],'−3 min','ana'],['Indução',RSI.ind[$('r-ind').value],'0','ind'],['Paralisia',RSI.par[$('r-par').value],'0 (logo após o indutor)','par']].forEach(([g,o,t,key])=>{
+    if(!o||!o.c){lines.push(`<div class="dose-line"><div class="k">${g}<span>${o?o.n:''}</span></div><div class="v" style="color:var(--muted)">—</div></div>`);return}
+    let d=o.d;if(ped&&o.dped)d=o.dped;const ds=Array.isArray(d)?d:[d,d];let lo=ds[0]*kg,hi=ds[1]*kg;if(o.min){lo=Math.max(lo,o.min);hi=Math.max(hi,o.min)}if(o.max){lo=Math.min(lo,o.max);hi=Math.min(hi,o.max)}
+    const mg=lo===hi?`${f(hi,hi<1?2:1)} ${o.u}`:`${f(lo,lo<1?2:1)}–${f(hi,hi<1?2:1)} ${o.u}`;const ml=lo===hi?`${f(hi/o.c,2)} mL`:`${f(lo/o.c,2)}–${f(hi/o.c,2)} mL`;
+    S[key]=`<b>${o.n}</b>: ${o.amp}. ${o.dil} → fazer <b>${ml}</b> (${mg}) EV.`;
+    lines.push(`<div class="dose-line"><div class="k">${g} · <b>${o.n}</b><span>${o.amp} · ${o.dil}</span><span>${Array.isArray(d)?d[0]+'–'+d[1]:d} ${o.u}/kg · ${t}</span></div><div class="v">${ml}<small>${mg}</small></div></div>`)});
+  const pp=PT.pp||null;const vt=pp?`${f(pp*6,0)}–${f(pp*8,0)} mL (peso predito ${f(pp,1)} kg)`:`${f(kg*6,0)}–${f(kg*8,0)} mL (6–8 mL/kg; use peso predito pela altura)`;
+  const totTxt=idade!=null?(idade<1?'TOT 3,5 sem cuff / 3,0 com cuff; lâmina reta 0–1':idade<12?`TOT ${f(idade/4+3.5,1)} com cuff (${f(idade/4+4,1)} sem cuff), fixar a ${f((idade/4+3.5)*3,0)} cm; lâmina ${idade<2?'reta 1':idade<8?'curva 2':'curva 3'}`:'TOT 7,0–7,5 (mulher) / 7,5–8,0 (homem), fixar a 21–23 cm; lâmina curva 3–4'):'TOT conforme idade';
+  const plan={kg,steps:[
+    `Paciente ${kg} kg${idade!=null?', '+idade+' anos':''}. Separar: ${totTxt}; aspirar as seringas: ${[S.pre,S.ana,S.ind,S.par].filter(Boolean).map(x=>x.split(':')[0].replace(/<\/?b>/g,'')).join(', ')}. Sugamadex de resgate ${f(16*kg,0)} mg; adrenalina push-dose (10 mcg/mL) 1–2 mL.`,
+    `O₂ 100% por 3–5 min (máscara não reinalante 15 L/min ou VNI se SatO₂ < 95%); cateter nasal 15 L/min mantido durante a laringoscopia. ${PT.sat&&PT.sat<90?'SatO₂ '+PT.sat+'%: preferir VNI/BVM com PEEP.':''}`,
+    (S.pre||S.ana)?`${S.pre}${S.pre&&S.ana?'<br>':''}${S.ana}${PT.pam!=null&&PT.pam<65?'<br>PAM '+f(PT.pam,0)+': iniciar noradrenalina ou push-dose de adrenalina antes da indução.':''}`:'Sem pré-tratamento selecionado. Otimizar PA (volume/vasopressor) antes da indução.',
+    `${S.ind||'Indutor não selecionado.'}<br>${S.par||'Sem bloqueador selecionado.'}`,
+    'Posição olfativa; aguardar 45–60 s (relaxamento mandibular). Pressão cricoide opcional.',
+    `Laringoscopia (preferir vídeo); ${totTxt}. Bougie se Cormack ≥ 2. Interromper se SatO₂ ≤ 93% → BVM.`,
+    `Capnografia; fixar o tubo; VC ${vt}, FR 16–20, PEEP 5, FiO₂ 100% e reduzir; sedação: fentanil ${f(kg*1,0)}–${f(kg*2,0)} mcg/h + propofol ${f(kg*0.5,0)}–${f(kg*2,0)} mg/h; PA a cada 2–3 min por 15 min; RX de tórax.`]};
+  drawSteps(plan);$('r-plan').innerHTML=`<div class="box g">Plano personalizado gerado para ${kg} kg. Os volumes estão em cada passo abaixo.</div>`;
+  const tot=idade!=null?(idade<1?'3,5 (sem cuff) / 3,0 (com cuff)':idade<12?`${f(idade/4+3.5,1)} com cuff · ${f(idade/4+4,1)} sem cuff · profundidade ${f((idade/4+3.5)*3,0)} cm`:'7,0–7,5 (mulher) / 8,0 (homem) · 21–23 cm no lábio'):'';
+  $('r-out').innerHTML=`<div class="panel card-r"><p class="sec">Doses calculadas — ${kg} kg${idade!=null?' · '+idade+' anos':''}</p>${lines.join('')}<div class="actions"><button class="btn" id="r-gosteps">Ver passo a passo com estes dados ›</button></div>${tot?`<p class="hint" style="margin-top:10px"><b>TOT:</b> ${tot}</p>`:''}<p class="hint"><b>Resgate:</b> adrenalina push-dose 10–20 mcg EV (1 mL de 1:10.000 diluído em 9 mL = 10 mcg/mL); naloxona 0,4 mg; sugamadex 16 mg/kg = ${f(16*kg,0)} mg se rocurônio.</p><p class="hint"><b>Sedação pós-intubação:</b> fentanil ${f(kg*1,0)}–${f(kg*2,0)} mcg/h + propofol ${f(kg*0.5,0)}–${f(kg*2,0)} mg/h (ou midazolam ${f(kg*0.05,1)}–${f(kg*0.1,1)} mg/h).</p></div>`;
+  $('r-gosteps').onclick=()=>$('r-seg').querySelector('[data-rtab=r-steps]').click();$('r-out').scrollIntoView({behavior:'smooth'})};
+
+/* ---------- interações ---------- */
+const IT=window.INTER||{groups:{},pairs:[]};
+const ALLDRUGS=[...new Set(IT.pairs.flatMap(p=>p[0].concat(p[1])))].sort((a,b)=>a.localeCompare(b,'pt'));
+$('it-dl').innerHTML=ALLDRUGS.map(d=>`<option value="${d}">`).join('');
+function itRow(){const r=document.createElement('div');r.className='it-row';r.innerHTML='<input list="it-dl" placeholder="Adicione um medicamento"><button aria-label="Remover">×</button>';r.querySelector('button').onclick=()=>{if($('it-rows').children.length>2)r.remove()};$('it-rows').appendChild(r)}
+itRow();itRow();$('it-add').onclick=itRow;
+function itMatch(input,list){const q=nrm(input).trim();if(!q)return false;return list.some(d=>{const n=nrm(d);return n===q||q.includes(n)||(n.length>4&&n.includes(q)&&q.length>=4)})}
+let itSample=null;(async()=>{try{itSample=await claude.use('sample')}catch(e){}})();
+$('it-run').onclick=async()=>{const drugs=[...$('it-rows').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
+  if(drugs.length<2){$('it-out').innerHTML='<p class="hint" style="color:var(--bad)">Informe pelo menos dois medicamentos.</p>';return}
+  const found=[],missing=[];
+  for(let i=0;i<drugs.length;i++)for(let j=i+1;j<drugs.length;j++){const a=drugs[i],b=drugs[j];const hits=IT.pairs.filter(p=>(itMatch(a,p[0])&&itMatch(b,p[1]))||(itMatch(a,p[1])&&itMatch(b,p[0])));
+    if(hits.length)hits.forEach(h=>found.push({a,b,h}));else missing.push([a,b])}
+  const rank={grave:0,moderada:1,leve:2};found.sort((x,y)=>rank[x.h[2]]-rank[y.h[2]]);
+  let html=found.length?`<div class="panel"><p class="sec">Interações encontradas (${found.length})</p>`+found.map(({a,b,h})=>`<div class="itx ${h[2]}"><span class="sev ${h[2]}">${h[2]}</span><b style="margin-top:6px">${a} + ${b}</b><p><b>Efeito:</b> ${h[3]}</p><p><b>Mecanismo:</b> ${h[4]}</p><p><b>Conduta:</b> ${h[5]}</p></div>`).join('')+'</div>':'';
+  if(missing.length)html+=`<div class="panel"><p class="sec">Sem interação relevante na base local</p><p class="hint">${missing.map(m=>m.join(' + ')).join(' · ')}</p>${itSample?'<div class="actions"><button class="btn primary" id="it-ai">Consultar o Claude sobre estes pares</button></div>':'<p class="hint">Abra o app dentro do Claude para consultar pares fora da base.</p>'}<div class="md" id="it-ai-out"></div></div>`;
+  $('it-out').innerHTML=html+'<p class="note">Base local com as interações de maior relevância clínica (fontes: Micromedex, Lexicomp, bulas ANVISA). Ausência na base não garante segurança.</p>';
+  const ai=$('it-ai');if(ai)ai.onclick=async()=>{ai.disabled=true;const out=$('it-ai-out');out.textContent='Pensando…';
+    try{const {text}=await itSample(`Você é um farmacêutico clínico. Para cada par de medicamentos abaixo, informe se há interação medicamentosa clinicamente relevante. Para cada par responda em português com: **Par**, **Gravidade** (grave / moderada / leve / sem interação relevante), **Efeito**, **Mecanismo**, **Conduta**. Seja objetivo e baseie-se em Micromedex/Lexicomp. Pares:\n${missing.map(m=>'- '+m.join(' + ')).join('\n')}`,{modelTier:'default',onText:({text})=>{out.innerHTML=mdLite(text)}});out.innerHTML=mdLite(text)}
+    catch(e){out.innerHTML=mdLite(e.text||'');if(e.code!=='cancelled')out.insertAdjacentHTML('beforeend',`<p class="hint">${e.code==='not_granted'?'Permissão não concedida.':'Falha na consulta. Tente novamente.'}</p>`);ai.disabled=false}}};
+/* ---------- laboratórios ---------- */
+const LB=window.LAB||[];const LBG=[['Referências rápidas','#f08a00','⚡'],['Sangue','#c0392b','🩸'],['Urina','#d4a017','🧪'],['Outros','#2b7fb8','🔬']];
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const lbCard=e=>`<div class="panel card-b" style="margin-bottom:10px"><b style="font:600 1rem var(--font-display)">${esc(e.n)}</b><div class="box g"><b>Referência:</b> ${esc(e.ref)}</div>${e.i?`<div class="box b"><b>Interpretação:</b> ${esc(e.i)}</div>`:''}${e.obs?`<p class="hint">${esc(e.obs)}</p>`:''}</div>`;
+function lbHome(q=''){const ql=nrm(q);
+  if(ql){const hits=LB.filter(e=>nrm(e.n+' '+e.ref+' '+(e.i||'')).includes(ql));$('lb-groups').innerHTML=hits.length?hits.map(lbCard).join(''):'<p class="hint">Nenhum exame encontrado.</p>';return}
+  $('lb-groups').innerHTML=LBG.map(([g,c,ic])=>`<button class="gcard" data-lbg="${g}"><span class="ic" style="background:${c}">${ic}</span><b>${g}</b><span class="cnt">${LB.filter(e=>e.g===g).length}</span><span class="bar" style="background:${c}"></span></button>`).join('')}
+lbHome();$('lb-q').addEventListener('input',e=>lbHome(e.target.value));
+$('lb-groups').addEventListener('click',e=>{const b=e.target.closest('[data-lbg]');if(!b)return;const g=b.dataset.lbg;const list=LB.filter(x=>x.g===g);$('lbl-title').textContent=g;$('lbl-sub').textContent=list.length+' itens';
+  $('lbl-list').innerHTML=list.map(lbCard).join('')+'<p class="note">Valores de referência variam entre laboratórios e métodos — confira o intervalo do laboratório local. Fontes: Harrison 21ª ed., Nelson 21ª ed., SBPC/ML, KDIGO, ADA 2024.</p>';go('s-lab-list')});
+
+/* ---------- toxicologia ---------- */
+const TX=window.TOX||[];const TXG=[['Intoxicação por Álcoois','#7b61c9'],['Drogas ilícitas','#c0392b'],['Gases','#5b6770'],['Medicamentos','#f08a00'],['Metais pesados','#2b7fb8'],['Plantas','#2e8b57'],['Produtos químicos','#d4a017'],['Síndrome serotoninérgica','#e8453c']];
+let txBack='s-tox';
+function txHome(q=''){const ql=nrm(q);
+  if(ql){const hits=TX.map((a,i)=>[a,i]).filter(([a])=>nrm(a.n+' '+a.g+' '+a.tox).includes(ql));$('tx-groups').innerHTML=hits.length?hits.map(([a,i])=>`<button class="item" data-tx="${i}"><div><b>${esc(a.n)}</b><span>${esc(a.g)}</span></div></button>`).join(''):'<p class="hint">Nenhum agente encontrado.</p>';return}
+  $('tx-groups').innerHTML=TXG.map(([g,c])=>{const n=TX.filter(a=>a.g===g).length;return n?`<button class="gcard" data-txg="${g}"><span class="ic" style="background:${c}">☠</span><b>${g}</b><span class="cnt">${n}</span><span class="bar" style="background:${c}"></span></button>`:''}).join('')}
+txHome();$('tx-q').addEventListener('input',e=>txHome(e.target.value));
+function openTox(i,back){const a=TX[i];txBack=back;$('txo-title').textContent=a.n;$('txo-sub').textContent=a.g;
+  $('txo-body').innerHTML=`<div class="panel card-r"><p class="sec">Quadro clínico / toxíndrome</p><div style="font-size:.9rem;line-height:1.5">${esc(a.tox)}</div></div>
+  <div class="panel card-b"><p class="sec">Exames</p><ul style="margin:0 0 0 18px;padding:0;font-size:.88rem;line-height:1.5">${(a.ex||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+  <div class="panel card-g"><p class="sec">Conduta e antídotos</p><ol style="margin:0 0 0 18px;padding:0;font-size:.88rem;line-height:1.5">${(a.tx||[]).map(x=>`<li style="margin-bottom:5px">${esc(x)}</li>`).join('')}</ol></div>
+  ${a.ref?`<p class="note">${esc(a.ref)}</p>`:''}<p class="note">CIATox 0800 722 6001 · Disque-Intoxicação ANVISA. Notificação compulsória (SINAN).</p>`;go('s-tox-one')}
+$('tx-groups').addEventListener('click',e=>{const t=e.target.closest('[data-tx]');if(t){openTox(+t.dataset.tx,'s-tox');return}const b=e.target.closest('[data-txg]');if(!b)return;const g=b.dataset.txg;
+  const list=TX.map((a,i)=>[a,i]).filter(([a])=>a.g===g);$('txl-title').textContent=g;$('txl-sub').textContent=list.length+' agentes';
+  $('txl-list').innerHTML=list.map(([a,i])=>`<button class="item" data-tx="${i}"><div><b>${esc(a.n)}</b><span>${esc(a.tox).slice(0,90)}…</span></div></button>`).join('');go('s-tox-list')});
+$('txl-list').addEventListener('click',e=>{const t=e.target.closest('[data-tx]');if(t)openTox(+t.dataset.tx,'s-tox-list')});
+$('txo-back').onclick=()=>go(txBack);
+
+/* ---------- protocolos emergenciais ---------- */
+const EM=window.EMERG||[];
+$('em-list').innerHTML=EM.map((p,i)=>`<button class="gcard" data-em="${i}"><span class="ic" style="background:${p.c}">✚</span><b>${esc(p.n)}<span style="display:block;font:400 .76rem var(--font-ui);color:var(--muted)">${esc(p.s)}</span></b><span class="bar" style="background:${p.c}"></span></button>`).join('');
+$('em-list').addEventListener('click',e=>{const b=e.target.closest('[data-em]');if(!b)return;const p=EM[+b.dataset.em];$('emo-title').textContent=p.n;$('emo-sub').textContent=p.s;
+  $('emo-body').innerHTML=p.sec.map((sc,i)=>`<div class="panel" style="border-left:4px solid ${p.c}"><p class="sec">${esc(sc.t)}</p><ol>${sc.items.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>`).join('')+`<p class="note">${esc(p.ref)}</p>`;go('s-emerg-one')});
+
+/* ---------- calendários vacinais ---------- */
+const VC=window.VAC||{cal:[],princ:[],vac:[]};
+$('vc-seg').onclick=e=>{const b=e.target.closest('[data-vctab]');if(!b)return;$('vc-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));['vc-cal','vc-pri','vc-vac'].forEach(id=>$(id).classList.toggle('active',id===b.dataset.vctab))};
+$('vc-callist').innerHTML=VC.cal.map((c,i)=>`<button class="item" data-vcal="${i}"><div><b>${esc(c.n)}</b><span>${esc(c.s)}</span></div></button>`).join('');
+$('vc-prilist').innerHTML=VC.princ.map(([t,b])=>`<div class="panel card-t"><b style="font:600 .98rem var(--font-display)">${esc(t)}</b><p style="margin:6px 0 0;font-size:.88rem;line-height:1.5">${esc(b)}</p></div>`).join('')+`<p class="note">${esc(VC.ref||'')}</p>`;
+function vcList(q=''){const ql=nrm(q);$('vc-vaclist').innerHTML=VC.vac.map((v,i)=>[v,i]).filter(([v])=>!ql||nrm(v.n+' '+v.i).includes(ql)).map(([v,i])=>`<button class="item" data-vvac="${i}"><div><b>${esc(v.n)}</b><span>${esc(v.t)}</span></div></button>`).join('')||'<p class="hint">Nenhuma vacina encontrada.</p>'}
+vcList();$('vc-q').addEventListener('input',e=>vcList(e.target.value));
+$('vc-callist').addEventListener('click',e=>{const b=e.target.closest('[data-vcal]');if(!b)return;const c=VC.cal[+b.dataset.vcal];$('vco-title').textContent=c.n;$('vco-sub').textContent=c.s;
+  $('vco-body').innerHTML=`<div class="panel"><table class="tbl">${c.rows.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table></div><p class="note">${esc(VC.ref||'')}</p>`;go('s-vac-one')});
+$('vc-vaclist').addEventListener('click',e=>{const b=e.target.closest('[data-vvac]');if(!b)return;const v=VC.vac[+b.dataset.vvac];$('vco-title').textContent=v.n;$('vco-sub').textContent=v.t;
+  $('vco-body').innerHTML=`<div class="panel card-g"><p class="sec">Esquema</p><div style="font-size:.9rem;line-height:1.5">${esc(v.e)}</div></div><div class="panel card-b"><p class="sec">Indicações / proteção</p><div style="font-size:.9rem;line-height:1.5">${esc(v.i)}</div></div><div class="panel card-r"><p class="sec">Contraindicações e precauções</p><div style="font-size:.9rem;line-height:1.5">${esc(v.c)}</div></div><div class="panel card-y"><p class="sec">Observações</p><div style="font-size:.9rem;line-height:1.5">${esc(v.o)}</div></div><p class="note">${esc(VC.ref||'')}</p>`;go('s-vac-one')});
+
+/* ---------- pressão infantil (AAP 2017; modelo do 4º Relatório NHBPEP) ---------- */
+const PA={m:{s:[102.19768,[1.82416,0.12776,0.00249,-0.00135],[2.73157,-0.19618,-0.04659,0.00616],10.7128],d:[61.01217,[0.68314,-0.09835,0.01711,0.00045],[1.46993,-0.07849,-0.03144,0.00967],11.6032],
+  h:{1:76,2:87,3:95,4:102,5:109,6:115,7:122,8:128,9:133,10:138,11:143,12:149,13:156,14:164,15:170,16:173,17:175}},
+ f:{s:[102.01027,[1.94397,0.00598,-0.00789,-0.00059],[2.03526,0.02534,-0.01884,0.00121],10.4855],d:[60.50510,[1.01301,0.01157,0.00424,-0.00137],[1.16641,0.12795,-0.03869,-0.00079],10.9573],
+  h:{1:74,2:86,3:94,4:101,5:108,6:115,7:121,8:127,9:133,10:138,11:144,12:151,13:157,14:160,15:162,16:163,17:163}}};
+const ncdf=z=>{const t=1/(1+0.2316419*Math.abs(z));const d=0.3989423*Math.exp(-z*z/2);let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p};
+const zq={50:0,90:1.2816,95:1.6449};
+function paMu(sex,k,age,zh){const [a,b,g,sd]=PA[sex][k];const y=age-10;let mu=a;for(let j=0;j<4;j++)mu+=b[j]*Math.pow(y,j+1)+g[j]*Math.pow(zh,j+1);return [mu,sd]}
+$('pa-run').onclick=()=>{const sex=$('pa-sex').value,age=num('pa-age'),h=num('pa-h'),S=num('pa-s'),D=num('pa-d');const out=$('pa-out');
+  if(age==null||age<1||age>17||h==null||S==null||D==null){out.innerHTML='<p class="hint" style="color:var(--bad)">Preencha idade (1–17 anos), altura, PAS e PAD.</p>';return}
+  const hmed=PA[sex].h[Math.round(age)],hsd=Math.min(7.5,2.8+0.3*age);const zh=Math.max(-3,Math.min(3,(h-hmed)/hsd));const hp=Math.round(ncdf(zh)*100);
+  const [ms,ss]=paMu(sex,'s',age,zh),[md,sdv]=paMu(sex,'d',age,zh);
+  const pS=Math.round(ncdf((S-ms)/ss)*100),pD=Math.round(ncdf((D-md)/sdv)*100);
+  const r=k=>({50:Math.round(ms+zq[50]*ss),90:Math.round(ms+zq[90]*ss),95:Math.round(ms+zq[95]*ss)}),rd={50:Math.round(md),90:Math.round(md+zq[90]*sdv),95:Math.round(md+zq[95]*sdv)};const rs=r();
+  let cls,c,why;
+  if(age>=13){if(S>=140||D>=90){cls='Hipertensão estágio 2';c='bad'}else if(S>=130||D>=80){cls='Hipertensão estágio 1';c='bad'}else if(S>=120){cls='Pressão arterial elevada';c='warn'}else{cls='Normal';c='ok'}why='≥ 13 anos: pontos de corte fixos (iguais ao adulto — AAP 2017 / ACC-AHA).'}
+  else{const s2=S>=rs[95]+12||S>=140,d2=D>=rd[95]+12||D>=90;const s1=S>=rs[95]||S>=130,d1=D>=rd[95]||D>=80;const se=S>=rs[90]||S>=120,de=D>=rd[90]||D>=80;
+    if(s2||d2){cls='Hipertensão estágio 2';c='bad'}else if(s1||d1){cls='Hipertensão estágio 1';c='bad'}else if(se||de){cls='Pressão arterial elevada';c='warn'}else{cls='Normal';c='ok'}
+    why='1–12 anos: percentis por sexo, idade e altura (ou 120/80, 130/80 e 140/90 — o que for menor).'}
+  const cond={ok:'Reavaliar na próxima consulta de rotina (anual). Orientar estilo de vida saudável.',
+    warn:'Orientar mudança de estilo de vida (dieta DASH, atividade física ≥ 60 min/d, sono, peso). Repetir em 6 meses (técnica auscultatória, MAPA se disponível); se persistir em 3 medidas → exames (hemograma, ureia/creatinina, eletrólitos, urina I, lipídios, glicemia, ecocardiograma) e nefrologia/cardiologia pediátrica.',
+    bad:cls.includes('2')?'Repetir em 1 semana (ou imediatamente se sintomático); confirmar em 3 ocasiões ou MAPA. Investigar causa secundária (renal/renovascular, coarctação, endócrina) — mais provável quanto menor a criança. Iniciar tratamento medicamentoso junto com mudanças de estilo de vida (IECA/BRA, bloqueador de canal de cálcio ou tiazídico). Sintomas (cefaleia intensa, vômitos, alteração visual, convulsão, IC) ou PA > p95 + 30 mmHg = emergência/urgência hipertensiva → encaminhar.':'Repetir em 1–2 semanas (auscultatório); confirmar em 3 medidas ou MAPA (hipertensão do avental branco × mascarada). Investigar: urina I, creatinina, eletrólitos, lipídios, glicemia, ecocardiograma (HVE), fundo de olho; causas secundárias se < 6 anos ou achados sugestivos. Estilo de vida por 3–6 meses; iniciar fármaco se persistir, sintomática, HVE, DRC ou diabetes.'};
+  out.innerHTML=`${res(c,cls,`PAS ${S} mmHg ≈ p${pS} · PAD ${D} mmHg ≈ p${pD} · altura ≈ p${hp}`)}
+  <div class="panel"><p class="sec">Referências para esta criança (${sex==='m'?'menino':'menina'}, ${age} anos, ${f(h,0)} cm)</p><table class="tbl"><tr><td>p50</td><td>${rs[50]} / ${rd[50]} mmHg</td></tr><tr><td>p90 (PA elevada)</td><td>${Math.min(rs[90],120)} / ${Math.min(rd[90],80)} mmHg</td></tr><tr><td>p95 (HAS estágio 1)</td><td>${Math.min(rs[95],130)} / ${Math.min(rd[95],80)} mmHg</td></tr><tr><td>p95 + 12 (HAS estágio 2)</td><td>${Math.min(rs[95]+12,140)} / ${Math.min(rd[95]+12,90)} mmHg</td></tr></table><p class="hint">${why}</p></div>
+  <div class="panel card-${c==='ok'?'g':c==='warn'?'y':'r'}"><p class="sec">Conduta</p><div style="font-size:.9rem;line-height:1.5">${cond[c]}</div></div>
+  <p class="note">Classificação AAP 2017 (Flynn et al., Pediatrics) adotada pela Diretriz Brasileira de Hipertensão 2020 (SBC) e pela SBP. Percentis estimados pelo modelo de regressão do 4º Relatório NHBPEP (idade e escore z de altura, CDC 2000); as tabelas AAP 2017 (sem crianças com excesso de peso) são ~2–4 mmHg mais baixas — em valores limítrofes, confira a tabela impressa. Diagnóstico exige confirmação em ≥ 3 ocasiões ou MAPA.</p>`};
+
+/* ---------- hidratação pediátrica ---------- */
+$('hd-run').onclick=()=>{const w=num('hd-w'),lt1=$('hd-age').value==='lt1',kcl=parseFloat($('hd-kcl').value),deg=parseFloat($('hd-deg').value);const out=$('hd-out');
+  if(!w||w<=0){out.innerHTML='<p class="hint" style="color:var(--bad)">Informe o peso.</p>';return}
+  const hs=w<=10?100*w:w<=20?1000+50*(w-10):1500+20*(w-20);const vd=Math.min(hs,2400),vh=vd/24;
+  const kkg=lt1?2.5:2;let kday=kkg*w;const kconc=kday/vd*1000;if(kconc>40){kday=40*vd/1000}const kml=kday/kcl;
+  const na20=vd*0.045;const naday=na20*3.4;const gir=(vd*50)/(w*1440);
+  const nacl500=500*0.045,kcl500=(kday/vd*500)/kcl;
+  const exp=20*w;const def=deg*10*w;const planB=75*w;const planC=100*w;
+  const kclNote=kcl===2.5?'KCl 19,1% (2,5 mEq/mL)':'KCl 10% (1,34 mEq/mL)';
+  out.innerHTML=`${res('ok','Manutenção (Holliday-Segar)',`${f(vd,0)} mL/dia · ${f(vh,0)} mL/h · Na ${f(naday,0)} mEq/d (${f(naday/w,1)} mEq/kg) · K ${f(kday,0)} mEq/d (${f(kday/w,1)} mEq/kg) · TIG ${f(gir,1)} mg/kg/min`)}
+  <div class="panel card-g"><p class="sec">Prescrição isotônica (recomendada — AAP 2018 / NICE 2020)</p>
+    <div class="box g"><b>Soro de manutenção — ${f(vd,0)} mL/24 h, correr a ${f(vh,0)} mL/h:</b><br>SG 5% ………… ${f(vd,0)} mL<br>NaCl 20% ……… ${f(na20,1)} mL (≈ 154 mEq/L, equivalente ao SF 0,9%)<br>${kclNote} … ${f(kml,1)} mL (${f(kday,0)} mEq → ${f(kday/vd*1000,0)} mEq/L)</div>
+    <div class="box b"><b>Por frasco de 500 mL (mesma proporção):</b> SG 5% 500 mL + NaCl 20% ${f(nacl500,1)} mL + ${kclNote} ${f(kcl500,1)} mL — ${Math.ceil(vd/500)} frasco(s)/dia a ${f(vh,0)} mL/h.</div>
+    <div class="box y"><b>Alternativa pronta:</b> SF 0,9% ou Ringer lactato ${f(vd,0)} mL + glicose 50% ${f(vd*0.1,0)} mL (≈ 5%) + KCl como acima. Em neonatos &lt; 28 dias e em hipernatremia (Na &gt; 150) ou restrição de sódio (IC, cirrose, síndrome nefrótica), individualizar.</div>
+    <p class="hint">Soluções hipotônicas (ex.: SG 5% + NaCl 20% 3 mEq/kg = "soro 1:4") aumentam em 2–3× o risco de hiponatremia hospitalar (meta-análises Cochrane 2014 e McNab 2015; AAP 2018 recomenda isotônica dos 28 dias aos 18 anos). Potássio só com diurese presente e K sérico conhecido; máx. 40 mEq/L em veia periférica (80 mEq/L em central, monitorizado). Dosar Na a cada 24 h (12 h se risco de SIADH: pós-operatório, pneumonia, meningite, bronquiolite).</p></div>
+  <div class="panel card-r"><p class="sec">Choque / expansão</p><div class="box r"><b>Bolus:</b> SF 0,9% ou Ringer lactato <b>${f(exp,0)} mL</b> (20 mL/kg) em 5–20 min; reavaliar perfusão, FC, fígado, estertores; repetir até 3× (60 mL/kg) na 1ª hora se sem sobrecarga. Choque séptico: vasopressor após 40–60 mL/kg (SSC pediátrico 2020). Desnutrição grave/anemia grave: 10–15 mL/kg (FEAST). DKA: 10 mL/kg em 1 h (ISPAD 2022).</div></div>
+  <div class="panel card-y"><p class="sec">Desidratação (${deg?deg+'% ≈ '+f(def,0)+' mL de déficit':'déficit por grau'})</p>
+    <table class="tbl"><tr><td>Leve 3–5%</td><td>${f(5*10*w,0)} mL — Plano A (OMS): SRO após cada evacuação (${lt1?'50–100':'100–200'} mL), manter dieta/aleitamento, zinco ${lt1?'10':'20'} mg/d por 10–14 d</td></tr>
+    <tr><td>Moderada 6–9%</td><td>${f(8*10*w,0)} mL — Plano B: SRO <b>${f(planB,0)} mL</b> (75 mL/kg) em 4 h na unidade, por colher/seringa/SNG; ondansetrona 0,15 mg/kg (máx. 8 mg) se vômitos; reavaliar em 4 h</td></tr>
+    <tr><td>Grave ≥ 10%</td><td>${f(planC,0)} mL — Plano C: SF 0,9%/RL <b>${f(planC,0)} mL</b> (100 mL/kg) EV: ${lt1?`<b>${f(30*w,0)} mL em 1 h</b> + <b>${f(70*w,0)} mL em 5 h</b> (&lt; 1 ano)`:`<b>${f(30*w,0)} mL em 30 min</b> + <b>${f(70*w,0)} mL em 2,5 h</b> (&gt; 1 ano)`}; repetir a fase rápida se pulso fraco; iniciar SRO 5 mL/kg/h assim que tolerar</td></tr></table>
+    <p class="hint">Reposição do déficit (quando não se usa plano C): repor em 24 h junto à manutenção (metade nas primeiras 8 h) com solução isotônica; na hipernatremia (Na &gt; 150) corrigir em 48–72 h, queda de Na ≤ 10–12 mEq/L/dia; na hiponatremia sintomática: NaCl 3% 3–5 mL/kg em 15–30 min. Perdas contínuas: repor volume a volume (diarreia: SRO ou SF ½ + KCl 20 mEq/L; sonda gástrica: SF 0,9% + KCl 10–20 mEq/L).</p></div>
+  <div class="panel"><p class="sec">Referências rápidas</p><div class="box b">Holliday-Segar: 100 mL/kg (até 10 kg) + 50 mL/kg (10–20 kg) + 20 mL/kg (&gt; 20 kg), máx. 2.400 mL/d. Regra 4-2-1 mL/kg/h. Necessidades: Na 2–3 mEq/kg/d, K 1–2 (lactentes 2–3) mEq/kg/d, glicose 5% para TIG ≈ 3–5 mg/kg/min (RN: 4–6). Reduzir para ⅔ em SIADH/ meningite/pós-operatório/IC; aumentar em febre (+12%/°C), fototerapia, hipermetabolismo.</div></div>
+  <p class="note">Feld LG et al. AAP Clinical Practice Guideline: Maintenance IV Fluids in Children, Pediatrics 2018; NICE NG29 (2020); McNab S et al. Cochrane 2014/Lancet 2015 (isotônica × hipotônica); OMS — Manejo da diarreia (planos A/B/C) 2005/2013; SBP Departamento de Gastroenterologia 2017; Surviving Sepsis Campaign Pediátrica 2020; ISPAD 2022.</p>`};
+
+/* ---------- Receita Rápida PS ---------- */
+const RXA=window.RXA||[],RXP=window.RXP||[],RXC=window.RXC||[];
+const RX={mode:'a',sp:'all',q:'',w:null,fav:{}};
+try{RX.fav=JSON.parse(localStorage.getItem('rxfav')||'{}')}catch(e){RX.fav={}}
+const rxSave=()=>{try{localStorage.setItem('rxfav',JSON.stringify(RX.fav))}catch(e){}};
+const rxData=()=>RX.mode==='a'?RXA:RX.mode==='p'?RXP:RXC;
+const rxKey=i=>RX.mode+i;
+const SPC={'Pneumologia':'#e8453c','Otorrinolaringologia':'#d4a017','Gastroenterologia':'#2b7fb8','Urologia':'#7b61c9','Ginecologia':'#d4588a','Cardiologia':'#c0392b','Neurologia':'#5b6770','Ortopedia':'#2e8b57','Reumatologia':'#2e8b57','Dermatologia':'#f08a00','Infectologia':'#1f9d8a','Oftalmologia':'#2b7fb8','Emergência':'#e8453c','Cirurgia':'#8d6e63','Psiquiatria':'#7b61c9','Endocrinologia':'#d4a017','Pediatria geral':'#f08a00','Queixas comuns de PS':'#e8453c','Emergência pediátrica':'#e8453c','Cardiometabólico':'#c0392b','Endocrinologia':'#d4a017','Nefrologia':'#7b61c9','Saúde mental':'#7b61c9','Clínica geral':'#2b7fb8','Alergia pediátrica':'#d4588a'};
+const spColor=sp=>SPC[sp]||SPC[sp.replace(/ pediátrica$/,'')]||'#5b6770';
+function fmtQty(q,u){if(u==='gotas'||u==='mg'||u==='UI')return String(Math.round(q));if(u==='cp')return String(Math.round(q*2)/2).replace('.',',');if(u==='g')return (Math.round(q*10)/10).toString().replace('.',',');return (q<1?Math.round(q*100)/100:Math.round(q*10)/10).toString().replace('.',',')}
+function tok(s,w){return String(s).replace(/\{\{([^}]*)\}\}/g,(m,b)=>{const p=b.split(';');
+  if(p[0]==='p')return `<mark class="dose">${p.slice(1).join(';')}</mark>`;
+  if(p[0]==='v'){const k=+p[1],mx=p[2]?+p[2]:null;if(w){let v=k*w;if(mx&&v>mx)v=mx;return `<mark class="dose">${fmtQty(v,'mL')} mL</mark>`}return `<mark class="dose">${String(k).replace('.',',')} mL/kg${mx?' (máx. '+mx+' mL)':''}</mark>`}
+  if(p[0]==='d'){const mgkg=+p[1],conc=+p[2],mx=+p[3];let u=p[4],lab='mg';if(u.includes('@')){[u,lab]=u.split('@')}
+    if(w){let mg=mgkg*w;const capped=mg>mx;if(capped)mg=mx;const q=mg/conc;
+      if(u==='mg')return `<mark class="dose">${Math.round(mg)} mg</mark>`;
+      if(u==='UI')return `<mark class="dose">${Math.round(mg)} UI</mark>`;
+      if(u==='g')return `<mark class="dose">${fmtQty(mg/1000,'g')} g</mark>`;
+      const mgTxt=mg>=1?Math.round(mg*10)/10:Math.round(mg*1000)/1000;
+      return `<mark class="dose">${fmtQty(q,u)} ${u}</mark> <span class="dose-sub">(${String(mgTxt).replace('.',',')} ${lab}${capped?' — dose máx.':''})</span>`}
+    if(u==='UI')return `<mark class="dose">${String(mgkg).replace('.',',')} UI/kg</mark> <span class="dose-sub">(máx. ${mx} UI)</span>`;const unitTxt=u==='mg'||u==='g'?'':'/dose';return `<mark class="dose">${String(mgkg).replace('.',',')} ${lab}/kg${unitTxt}</mark> <span class="dose-sub">(máx. ${lab==='mg'&&mx>=1000?String(mx/1000).replace('.',',')+' g':mx+' '+lab})</span>`}
+  return m})}
+function tokPlain(s,w){return tok(s,w).replace(/<[^>]+>/g,'')}
+function rxList(){const d=rxData();const ql=nrm(RX.q);
+  const sps={};d.forEach(c=>sps[c.sp]=(sps[c.sp]||0)+1);const nfav=d.filter((c,i)=>RX.fav[rxKey(i)]).length;
+  $('rx-chips').innerHTML=`<button class="chip ${RX.sp==='all'?'on':''}" data-sp="all">Todas <b>${d.length}</b></button><button class="chip ${RX.sp==='fav'?'on':''}" data-sp="fav">★ Favoritas <b>${nfav}</b></button>`+Object.keys(sps).map(s=>`<button class="chip ${RX.sp===s?'on':''}" data-sp="${esc(s)}"><i style="background:${spColor(s)}"></i>${esc(s)} <b>${sps[s]}</b></button>`).join('');
+  const rows=d.map((c,i)=>[c,i]).filter(([c,i])=>(RX.sp==='all'||(RX.sp==='fav'?RX.fav[rxKey(i)]:c.sp===RX.sp))&&(!ql||nrm(c.n+' '+c.cid+' '+c.sp+' '+(c.ps||[]).map(g=>g.i.join(' ')).join(' ')).includes(ql)));if(ql)rows.sort((a,b)=>(nrm(b[0].n+' '+b[0].cid).includes(ql)?1:0)-(nrm(a[0].n+' '+a[0].cid).includes(ql)?1:0));
+  $('rx-count').textContent=rows.length+(rows.length===1?' condição':' condições');
+  $('rx-list').innerHTML=rows.map(([c,i])=>`<div class="rxrow"><button class="item" data-rx="${i}"><div><b><i class="dot" style="background:${spColor(c.sp)}"></i>${esc(c.n)}</b><span>CID ${esc(c.cid)} · ${esc(c.sp)}</span></div></button><button class="star ${RX.fav[rxKey(i)]?'on':''}" data-fav="${i}" aria-label="Favoritar">★</button></div>`).join('')||'<p class="hint">Nenhuma condição encontrada.</p>'}
+function rxOpenMode(mode){RX.mode=mode;RX.sp='all';RX.q='';$('rx-q').value='';const amb=mode==='c';$('rx-seg').hidden=amb;$('rx-title').textContent=amb?'Receita Rápida Ambulatório':'Receita Rápida PS';$('rx-sub').textContent=amb?'Clínica médica — conduta, receituário e orientações por queixa crônica':'Prescrições prontas para o plantão — PS (IM/EV) e para casa';$('rx-q').placeholder=amb?'Buscar: HAS, diabetes, colesterol, tireoide, insônia…':'Buscar doença, sintoma ou CID';if(!amb)$('rx-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.rxmode===mode));rxList()}
+window.rxOpenMode=rxOpenMode;
+$('rx-seg').onclick=e=>{const b=e.target.closest('[data-rxmode]');if(!b)return;RX.mode=b.dataset.rxmode;RX.sp='all';$('rx-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('rx-q').placeholder=RX.mode==='a'?'Buscar doença, sintoma ou CID':'Buscar doença pediátrica, sintoma ou CID';rxList()};
+$('rx-q').addEventListener('input',e=>{RX.q=e.target.value;rxList()});
+$('rx-chips').addEventListener('click',e=>{const b=e.target.closest('[data-sp]');if(!b)return;RX.sp=b.dataset.sp;rxList()});
+$('rx-list').addEventListener('click',e=>{const f=e.target.closest('[data-fav]');if(f){const k=rxKey(+f.dataset.fav);if(RX.fav[k])delete RX.fav[k];else RX.fav[k]=1;rxSave();rxList();return}const b=e.target.closest('[data-rx]');if(b)openRx(+b.dataset.rx)});
+rxList();
+let rxCur=null,rxTab='ps';
+function openRx(i){rxCur=i;rxTab='ps';const c=rxData()[i];$('rxo-title').textContent=c.n;$('rxo-cid').textContent='CID '+c.cid;$('rxo-sp').innerHTML=`<i class="dot" style="background:${spColor(c.sp)}"></i>${esc(c.sp)}`;
+  $('rxo-peso').hidden=RX.mode!=='p';const L=RX.mode==='c'?['Conduta','Receituário','Orientações','Explicações']:['No PS','Para casa','Orientações','Explicações'];[...$('rxo-seg').querySelectorAll('button')].forEach((b,i)=>b.textContent=L[i]);$('rxo-fav').classList.toggle('on',!!RX.fav[rxKey(i)]);
+  $('rxo-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.rxtab==='ps'));drawRx();go('s-rx-one')}
+const RX_DOSE=/\d\s?(mg|mcg|g|mL|L\/min|UI|mEq|gotas?|jatos?|cp|comprimidos?|c[aá]psulas?|envelopes?|amp|%)\b|\{\{[dv];|\b(IM|EV|SC|VO|SL|IN)\b.*\d/i;
+const RX_EXPL=/^(diagn[oó]stic|suspeitar|classifica|crit[eé]rio|avaliar|avalia[cç][aã]o|internar|interna[cç][aã]o|excluir|red flags?|exames?\b|diferencia|n[aã]o (usar|prescrever|recomendad|h[aá]|[eé]|fazer|iniciar|suturar|dar|precisa)|nunca|evitar|observa[cç][aã]o|observar|alta\b|notifica|sinais de alarme|alarme|defini[cç][aã]o|causas|etiologia|identificar|investigar|prurido p[oó]s|recorr[eê]ncia|imagem|cultura|tratar (a )?causa|tratar fontes|checar|sempre:|primeiro|ambiente|durante|ap[oó]s a crise|pun[cç][aã]o|neuroimagem|lcr|maus-tratos|contagi|em crian[cç]a|fase |per[ií]odo|indica[cç]|escore|score|regras? de|hist[oó]ria|sinais|defini|complica|progn[oó]stico|refer|triagem|sem imagem|sem exame|resultado|reavaliar|reavalia[cç][aã]o|quando|se |a |o |os |as |em |com |pacientes?|crian[cç]a|lactente|adolescente|beb[eê]|rn\b|rec[eé]m|m[aã]e|contatos?|profilaxia p[oó]s|preven[cç][aã]o|vacina|calcular|estimar|delimitar|monitor|medidas|orienta|explicar|anamnese|crise\b|dor\b|febre\b|regurgita|c[oó]lica|refluxo|eczema|otite|celulite|adenite|picada|hidrata[cç][aã]o oral|abcde|testar|coletar|coleta|tript|tétano conforme|t[eé]tano:|profilaxia do t[eé]tano|cefaleia tensional|rinossinusite viral|urtic[aá]ria aguda|resfriado|coqueluche|crupe|bronquiolite|pneumonia|sibil|triptase|lesões?|placas|alerta|avaliar)/i;
+const RX_ADD={'Abscesso cutâneo / furúnculo':['Lidocaína 2% sem vasoconstritor 2–5 mL — infiltração em campo/bloqueio para incisão e drenagem','Dipirona 1 g VO/EV antes do procedimento','Sulfametoxazol + trimetoprima 800/160 mg VO 1ª dose após a drenagem (ou cefalexina 500 mg VO)'],
+'Impetigo (adulto) / foliculite':['Compressas mornas com SF 0,9% 10 min + remoção das crostas','Mupirocina 2% pomada — aplicar nas lesões (1ª aplicação no PS)','Cefalexina 500 mg VO 1ª dose se extenso/febre'],
+'Profilaxia antitetânica (ferimentos)':['Vacina dT (ou dTpa) 0,5 mL IM no deltoide — se indicada pelo histórico/ferimento','Imunoglobulina antitetânica humana (IGHAT) 250 UI IM em outro sítio (500 UI se > 24 h, > 90 kg ou ferimento muito contaminado) — se < 3 doses/incerto + ferimento de alto risco','Se IGHAT indisponível: soro antitetânico (SAT) 5.000 UI IM após precauções para anafilaxia','Limpeza e desbridamento do ferimento com SF 0,9% abundante'],
+'Crise de ansiedade / ataque de pânico':['Clonazepam 0,5–1 mg SL/VO dose única (ou diazepam 5–10 mg VO; lorazepam 1–2 mg VO em idoso/hepatopata) — só se não controlar com medidas não farmacológicas','Glicemia capilar, SatO₂, ECG (se > 40 a, dor torácica ou fatores de risco)'],
+'Impetigo (criança)':['Compressas mornas com SF 0,9% 10–15 min + remoção suave das crostas','Mupirocina 2% pomada nas lesões (1ª aplicação no PS)','Cefalexina {{d;12.5;50;500;mL}} VO 1ª dose (susp. 250 mg/5 mL) se extenso/bolhoso/febre'],
+'Celulite / adenite cervical / picada de inseto infectada (criança)':['Dipirona {{d;15;25;1000;gotas}} VO (ou ibuprofeno {{d;10;5;400;gotas}} ≥ 6 m)','Cefalexina {{d;25;50;500;mL}} VO 1ª dose (susp. 250 mg/5 mL — 100 mg/kg/dia) se ambulatorial','Ceftriaxona 50 mg/kg IM {{d;50;350;1000;mL}} (1 g em 2,8 mL de lidocaína 1%) se vômitos/intolerância oral antes de internar/transição','Cetirizina {{d;0.25;1;10;mL}} VO se picadas com prurido intenso','Elevar o membro; delimitar a borda do eritema com caneta e hora']};
+const rxIs=x=>RX_DOSE.test(x)&&!RX_EXPL.test(x.trim());
+const rxTrim=x=>{const i=x.indexOf(' — ');if(i>12){const pre=x.slice(0,i);const bal=(pre.match(/\(/g)||[]).length===(pre.match(/\)/g)||[]).length;if(bal&&RX_DOSE.test(pre))return pre}return x};
+function rxSplit(c){const rx=[],ex=[];c.ps.forEach(g=>{const expl=/^(AVALIA|EXAME|CRIT|DIAGN|CONDUTA GERAL)/i.test(g.v);const a=expl?[]:g.i.filter(rxIs),b=expl?g.i:g.i.filter(x=>!rxIs(x));if(a.length)rx.push({v:g.v,i:a.map(rxTrim)});if(b.length)ex.push({v:g.v,i:b})});
+  if(RX_ADD[c.n]){if(rx.length)rx.push({v:'VO — 1ª dose no PS',i:RX_ADD[c.n]});else rx.unshift({v:'PS',i:RX_ADD[c.n]})}
+  if(RX_1ST[c.n]&&RX_1ST[c.n].length)rx.push({v:'VO — 1ª dose no PS',i:RX_1ST[c.n]});return {rx,ex}}
+const RX_1ST={'Otite média aguda (criança)':['Amoxicilina {{d;45;80;2000;mL}} VO (susp. 400 mg/5 mL — 90 mg/kg/dia) — 1ª dose se indicação de antibiótico imediato'],
+'Rinossinusite aguda bacteriana (criança)':['Amoxicilina {{d;25;80;1000;mL}} VO (susp. 400 mg/5 mL) — 1ª dose'],
+'Otite média aguda (adulto)':['Amoxicilina 500 mg VO — 1ª dose'],
+'Rinossinusite aguda bacteriana':['Amoxicilina + clavulanato 875/125 mg VO — 1ª dose (se critérios bacterianos)'],
+'Cistite aguda não complicada (mulher)':['Nitrofurantoína 100 mg VO — 1ª dose (se não optar por fosfomicina)'],
+'Celulite / Erisipela':['Cefalexina 1 g VO — 1ª dose (celulite não purulenta)'],
+'Mastite puerperal / ingurgitamento':['Cefalexina 500 mg VO — 1ª dose se critérios de antibiótico'],
+'Infecção do trato urinário (criança)':[],
+'Pneumonia adquirida na comunidade (criança — ambulatorial)':[],
+'Escarlatina':[]};
+function drawRx(){const c=rxData()[rxCur];if(!c)return;const w=RX.mode==='p'?RX.w:null;const body=$('rxo-body');
+  const pesoNote=RX.mode==='p'?(w?`<p class="hint">Doses calculadas para <b>${f(w,1)} kg</b> — valores destacados. Confira a concentração do produto em mãos.</p>`:`<p class="hint" style="color:var(--warn)">Informe o peso acima para calcular as doses (por enquanto exibidas em mg/kg).</p>`):'';
+  if(rxTab==='ps'){const q=(window.RXQ||{})[c.n];const {rx}=rxSplit(c);let n=0;
+    const full=`${rx.map(g=>`<div class="rx-via">${esc(g.v)}</div><ol class="rxol" start="${n+1}">${g.i.map(x=>{n++;return `<li>${tok(esc(x),w)}</li>`}).join('')}</ol>`).join('')}`;
+    body.innerHTML=pesoNote+(q?`<div class="panel card-r"><p class="sec">${RX.mode==='c'?'Conduta resumida':'Prescrição rápida — 1ª linha'}</p><ol class="rxol rxq">${q.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ol></div><details class="panel rxmore"><summary>${RX.mode==='c'?'Conduta detalhada':'Outras opções e alternativas'}</summary>${full}</details>`:`<div class="panel card-r"><p class="sec">Prescrição — pronto-socorro</p>${full}</div>`)+`<div class="actions"><button class="btn primary" id="rx-copy-ps">${RX.mode==='c'?'Copiar conduta':'Copiar prescrição do PS'}</button><button class="btn" data-rxgo="exp">Ver explicações ›</button></div>`;
+    $('rx-copy-ps').onclick=()=>rxCopy(rxTextPs(c,w),$('rx-copy-ps'))}
+  else if(rxTab==='exp'){const {ex}=rxSplit(c);body.innerHTML=`<div class="panel card-y"><p class="sec">Avaliação, critérios e conduta</p>${ex.length?ex.map(g=>`<div class="rx-via">${esc(g.v)}</div><ul class="rxul">${g.i.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul>`).join(''):'<p class="hint">Sem observações adicionais.</p>'}</div><div class="panel card-b"><p class="sec">Prescrição comentada (texto completo)</p><ol class="rxol">${c.ps.flatMap(g=>g.i).filter(rxIs).map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ol></div><p class="note"><b>Evidência:</b> ${esc(c.ref)}</p>`}
+  else if(rxTab==='casa'){let n=0;body.innerHTML=pesoNote+`<div class="panel card-g"><p class="sec">Receituário</p><div class="rx-paper">${c.casa.map(g=>`<div class="rx-via">${esc(g.v)}</div>`+g.i.map(([a,b,d])=>{n++;return `<div class="rx-it"><div class="rx-l1"><span class="rx-n">${n}.</span><span class="rx-drug">${tok(esc(a),w)}</span><span class="rx-dots"></span><span class="rx-qty">${tok(esc(b),w)}</span></div><div class="rx-pos">${tok(esc(d),w)}</div></div>`}).join('')).join('')}</div><div class="actions"><button class="btn primary" id="rx-copy-casa">Copiar receituário</button><button class="btn" data-ntadd="casa">Inserir no esqueleto ›</button></div></div>`;
+    $('rx-copy-casa').onclick=()=>rxCopy(rxTextCasa(c,w),$('rx-copy-casa'))}
+  else{body.innerHTML=`<div class="panel card-b"><p class="sec">Orientações ao paciente</p><ul class="rxul">${c.ori.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul></div><div class="panel card-r"><p class="sec">Sinais de alarme — retornar imediatamente</p><ul class="rxul">${c.al.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul></div><p class="note"><b>Evidência:</b> ${esc(c.ref)}</p><div class="actions"><button class="btn" id="rx-copy-ori">Copiar orientações</button></div>`;
+    $('rx-copy-ori').onclick=()=>rxCopy(rxTextOri(c,w),$('rx-copy-ori'))}}
+const rxHead=(c,w)=>`${c.n.toUpperCase()} (CID ${c.cid})\nPaciente: ______________________________  ${w?'Peso: '+f(w,1)+' kg  ':''}Data: ___/___/______\n`;
+function rxTextPs(c,w){let n=0;const q=(window.RXQ||{})[c.n];const H=RX.mode==='c'?'CONDUTA — AMBULATÓRIO\n':'PRESCRIÇÃO — PRONTO-SOCORRO\n';if(q)return H+rxHead(c,w)+'\n'+q.map(x=>`${++n}. ${tokPlain(x,w)}`).join('\n')+'\n';const {rx}=rxSplit(c);return H+rxHead(c,w)+'\n'+rx.map(g=>g.v.toUpperCase()+'\n'+g.i.map(x=>`${++n}. ${tokPlain(x,w)}`).join('\n')).join('\n\n')+'\n'}
+function rxTextCasa(c,w){let n=0;return 'RECEITUÁRIO\n'+rxHead(c,w)+'\n'+c.casa.map(g=>g.v.toUpperCase()+'\n'+g.i.map(([a,b,d])=>{const A=tokPlain(a,w),B=tokPlain(b,w),D=tokPlain(d,w);const dots='-'.repeat(Math.max(3,56-A.length-B.length));return `${++n}. ${A} ${dots} ${B}\n   ${D}.`}).join('\n')).join('\n\n')+'\n\n'+'ORIENTAÇÕES\n'+c.ori.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\nSINAIS DE ALARME — retornar imediatamente\n'+c.al.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\n_______________________________\nAssinatura e carimbo (CRM)\n'}
+function rxTextOri(c,w){return `ORIENTAÇÕES — ${c.n}\n`+c.ori.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\nSINAIS DE ALARME — procurar atendimento imediatamente\n'+c.al.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n'}
+async function rxCopy(t,btn){const ok=await copyText(t);const o=btn.textContent;btn.textContent=ok?'Copiado ✓':'Não foi possível copiar';setTimeout(()=>btn.textContent=o,1800)}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const r=document.execCommand('copy');ta.remove();return r}catch(e2){return false}}}
+function rxSetTab(t){rxTab=t;$('rxo-seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.rxtab===t));drawRx();window.scrollTo({top:0})}
+$('rxo-seg').onclick=e=>{const b=e.target.closest('[data-rxtab]');if(b)rxSetTab(b.dataset.rxtab)};
+$('rxo-body').addEventListener('click',e=>{const b=e.target.closest('[data-rxgo]');if(b)rxSetTab(b.dataset.rxgo);const a=e.target.closest('[data-ntadd]');if(a){const c=rxData()[rxCur];const w=RX.mode==='p'?RX.w:null;ntInsert(rxTextCasa(c,w).trim(),/- Prescrição:|prescrição domiciliar|CONDUTA:/);go('s-note')}});
+$('rx-w').addEventListener('input',e=>{const v=parseFloat(e.target.value);RX.w=isNaN(v)||v<=0?null:v;drawRx()});
+$('rxo-fav').onclick=()=>{const k=rxKey(rxCur);if(RX.fav[k])delete RX.fav[k];else RX.fav[k]=1;rxSave();$('rxo-fav').classList.toggle('on',!!RX.fav[k]);rxList()};
+$('rxo-cidcopy').onclick=async()=>{const c=rxData()[rxCur];const ok=await copyText(c.cid);$('rxo-cid').textContent=ok?'CID copiado ✓':'CID '+c.cid;setTimeout(()=>$('rxo-cid').textContent='CID '+c.cid,1500)};
+
+/* ---------- Esqueleto de atendimento (integrado à Semiologia e às prescrições) ---------- */
+const NT_TPL={
+amb:{n:'Consulta',t:`ID: ____, __ a, ____.
+QP: ____ há ____.
+HDA: início/caráter/intensidade __/10/irradiação/fatores de melhora-piora/associados/evolução/tratamentos prévios: ____
+AP: HAS ( ) DM ( ) DLP ( ) outros ____ · cirurgias ____ · alergias ____ · vacinas ____ · G_P_A_ DUM ____
+MUC: ____ (adesão: ____)
+Hábitos: tabaco ____ · álcool ____ · AF ____ · sono ____
+HF: ____
+EF: PA ___/___ FC ___ FR ___ Tax ___ SatO₂ ___% Peso ___ Alt ___ IMC ___ CA ___ Gli ___
+BEG, corado, hidratado, anictérico, acianótico, eupneico. ACV: RCR 2T BNF s/ sopro. AR: MV+ s/ RA. ABD: flácido, indolor, s/ VMG. MMII: s/ edema, pulsos +. Neuro: s/ déficits. Direcionado: ____
+Exames: ____
+HD: 1. ____ (CID ____) 2. ____
+CONDUTA: orientações ____ · prescrição ____ · exames ____ · encaminhamento ____ · atestado ____ · retorno em ____`},
+ps:{n:'PS adulto',t:`ID: ____, __ a. Chegada __:__ · Classificação ____
+QP: ____ há ____.
+HDA: ____ (início, caráter, intensidade __/10, irradiação, melhora/piora, associados, medicações já usadas)
+AP: ____ · alergias ____ · MUC ____ · anticoag ( ) · DUM ____ · tétano ____
+EF: PA ___/___ FC ___ FR ___ Tax ___ SatO₂ ___% Gli ___ Dor __/10 Glasgow ___
+Geral ____ · ACV ____ · AR ____ · ABD ____ · Neuro ____ · Extremidades/TEC ____ · Direcionado ____
+Exames no PS: ECG ____ · lab ____ · imagem ____
+HD: 1. ____ (CID ____) 2. ____ · Afastar: ____
+CONDUTA (__:__): 1. ____ 2. ____ 3. ____
+Reavaliação (__:__): ____
+Desfecho: ( ) alta ( ) observação ( ) internação ( ) transferência
+Alta: receita ____ · sinais de alarme ____ · retorno ____ · atestado __ d`},
+ped:{n:'Pediatria',t:`ID: ____, __ a/m, acomp.: ____. Peso ___ kg Est ___ cm PC ___ (p__)
+QP: ____ há ____.
+HDA: febre (Tmáx ___) ____ · aceitação __% · diurese ____ · vômitos/evac ____ · tosse/dispneia ____ · contactantes ____ · medicações ____
+AP: IG ___ sem, PN ___ g · aleitamento ____ · DNPM ____ · vacinas em dia ( ) ____ · internações ____ · alergias ____ · doenças ____
+EF: TAP (aparência/resp/circ) ____ · FC ___ FR ___ Tax ___ SatO₂ ___% PA ___/___ TEC __ s
+Geral/hidratação ____ · OROF ____ · OTOSC ____ · gânglios ____ · meníngeos ( ) · ACV ____ · AR (tiragem/sibilos) ____ · ABD ____ · pele ____ · neuro ____
+HD: 1. ____ (CID ____) 2. ____
+CONDUTA: hidratação ____ · antitérmico ____ · ATB ____ · exames ____ · ( ) observação/internação
+Orientações: alarme ____ · retorno ____ · atestado escolar __ d`},
+ret:{n:'Retorno crônico',t:`RETORNO — ____ (última: __/__/__)
+Evolução: ____ · adesão ( ) ok ( ) falhas ____ · efeitos adversos ____ · MRPA/glicemias ____ · hábitos/peso ____
+MUC: ____
+EF: PA ___/___ FC ___ Peso ___ (Δ ___) IMC ___ CA ___ · ACV/AR/ABD/MMII/pés ____
+Exames (__/__): HbA1c ___ Gli ___ Cr ___ (TFG ___) K ___ RAC ___ LDL ___ HDL ___ TG ___ TSH ___ Hb ___ EAS ___ ECG ___ FO ___
+Metas: PA ( ) HbA1c ( ) LDL ( ) peso ( ) tabaco ( )
+Avaliação: ( ) controlado ( ) parcial ( ) descontrolado — ____
+Conduta: manter ____ · ajustar ____ (__ → __) · iniciar ____ · suspender ____ · exames ____ · encaminhar ____ · vacinas/rastreios ____ · retorno ____`},
+evo:{n:'Evolução SOAP',t:`EVOLUÇÃO — DIH __ · leito __ · __/__/__ __:__
+S: ____ · dor __/10 · dieta __% · sono ____ · diurese/evac ____
+O: PA ___/___ FC ___ FR ___ Tax ___ SatO₂ ___% (O₂ __ L) Gli ___ · diurese ___ mL · BH ___
+Geral ____ · ACV ____ · AR ____ · ABD ____ · MMII ____ · neuro ____ · dispositivos: AVP D__ · SVD D__ · ____
+Lab: Hb ___ Leuco ___ Plaq ___ Cr ___ Ur ___ Na ___ K ___ PCR ___ · culturas ____ · imagem ____
+A: # ____ (D__ ATB ____) # ____ # ____ — ( ) estável ( ) melhora ( ) piora
+P: manter ____ · ajustar ____ · suspender ____ · solicitar ____ · fisio/nutri/mobilização ____ · profilaxia TEV ( ) · retirar dispositivos ( ) · previsão de alta ____ · pendências ____`},
+doc:{n:'Atestado / encaminhamento',t:`ATESTADO: Atesto que ____________, doc. ________, foi atendido(a) em __/__/____ às __:__, necessitando de afastamento por ___ (__) dia(s) a partir desta data. CID ____ (a pedido). Local, __/__/____. ________ CRM ____
+
+DECLARAÇÃO: Declaro que ____________ compareceu a esta unidade em __/__/____ das __:__ às __:__ (acompanhando ____________). ________ CRM ____
+
+ENCAMINHAMENTO: Ao serviço de ____________. Encaminho ____________, __ anos, para avaliação de ____ (HD: ____ — CID ____). Resumo: ____. Exames: ____. Em uso: ____. Prioridade: ( ) rotina ( ) prioritária ( ) urgente — ____. Local, __/__/____. ________ CRM ____`}
+};
+const NT={key:'amb'};
+const ntLoad=k=>{try{return localStorage.getItem('nt:'+k)}catch(e){return null}};
+const ntSave=(k,v)=>{try{localStorage.setItem('nt:'+k,v)}catch(e){}};
+function ntInit(){const sel=$('nt-tpl');sel.innerHTML=Object.entries(NT_TPL).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('');$('nt-chips').innerHTML=Object.entries(NT_TPL).map(([k,v])=>`<button class="chip ${k===NT.key?'on':''}" data-nt="${k}">${v.n}</button>`).join('');$('nt-chips').onclick=e=>{const b=e.target.closest('[data-nt]');if(!b)return;NT.key=b.dataset.nt;$('nt-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.nt===NT.key));ntShow()};
+  const SM2=window.SEMIO||[];$('nt-sp').innerHTML='<option value="">— Semiologia: escolha o sistema —</option>'+SM2.map((s,i)=>`<option value="${i}">${esc(s.n)}</option>`).join('');
+  ntShow()}
+function ntShow(){const k=NT.key;const saved=ntLoad(k);$('nt-text').value=saved!=null?saved:NT_TPL[k].t;ntCount()}
+function ntCount(){const v=$('nt-text').value;$('nt-count').textContent=`${v.length} caracteres · ${(v.match(/____/g)||[]).length} campos a preencher`}
+function ntInsert(txt,anchor){const ta=$('nt-text');let s=ta.selectionStart??ta.value.length,e=ta.selectionEnd??s;if(anchor){const mt=ta.value.match(anchor);if(mt){s=mt.index+mt[0].length;e=s;if(ta.value.slice(s,s+5)===' ____')e=s+5;if(ta.value.slice(s,s+4)==='____')e=s+4}}const before=ta.value.slice(0,s),after=ta.value.slice(e);const sep=before.endsWith('\n')||before===''?'':'\n';ta.value=before+sep+txt+'\n'+after;const pos=(before+sep+txt+'\n').length;ta.focus();ta.setSelectionRange(pos,pos);ntSave(NT.key,ta.value);ntCount()}
+$('nt-tpl').addEventListener('change',e=>{NT.key=e.target.value;ntShow()});
+$('nt-text').addEventListener('input',()=>{ntSave(NT.key,$('nt-text').value);ntCount()});
+$('nt-sp').addEventListener('change',e=>{const i=e.target.value;const tp=$('nt-tp');if(i===''){tp.innerHTML='<option value="">— tópico —</option>';return}const sp=(window.SEMIO||[])[+i];tp.innerHTML='<option value="">— escolha o tópico/queixa —</option>'+sp.t.map((t,j)=>`<option value="${j}">${esc(t.t)}</option>`).join('')});
+$('nt-sm-exam').onclick=()=>{const i=$('nt-sp').value,j=$('nt-tp').value;if(i===''||j===''){ntFlash('Escolha sistema e tópico da Semiologia');return}const tp=(window.SEMIO||[])[+i].t[+j];ntInsert(`EXAME DIRECIONADO — ${tp.t}:\n${tp.s}\nAchados: ____`,/Exame direcionado[^\n]*?:|Exame direcionado: /)};
+$('nt-sm-dx').onclick=()=>{const i=$('nt-sp').value,j=$('nt-tp').value;if(i===''||j===''){ntFlash('Escolha sistema e tópico da Semiologia');return}const tp=(window.SEMIO||[])[+i].t[+j];ntInsert(`HIPÓTESES (${tp.t}):\n`+tp.dx.map((d,n)=>`${n+1}. ${d}`).join('\n')+`\nEXAMES A SOLICITAR:\n`+tp.ex.map(x=>'- '+x).join('\n')+`\nCONDUTA SUGERIDA:\n`+tp.tx.map(x=>'- '+x).join('\n')+(tp.ref?`\n(Ref.: ${tp.ref})`:''),/HIPÓTESES DIAGNÓSTICAS:|HIPÓTESE\(S\):|HIPÓTESES:/)};
+$('nt-sm-all').onclick=()=>{const i=$('nt-sp').value;if(i===''){ntFlash('Escolha o sistema da Semiologia');return}const sp=(window.SEMIO||[])[+i];ntInsert(`EXAME FÍSICO — ${sp.n}:\n`+sp.t.map(t=>`• ${t.t}: ${t.s} → ____`).join('\n'))};
+/* prescrições */
+function ntRxList(q){const ql=nrm(q||'');const all=[...(window.RXA||[]).map(c=>['a',c]),...(window.RXP||[]).map(c=>['p',c]),...(window.RXC||[]).map(c=>['c',c])];const hits=ql?all.filter(([m,c])=>nrm(c.n+' '+c.cid).includes(ql)).slice(0,12):[];
+  $('nt-rx-hits').innerHTML=hits.map(([m,c])=>`<button class="chip" data-ntrx="${m}|${esc(c.n)}">${m==='p'?'👶 ':m==='c'?'🩺 ':''}${esc(c.n)}</button>`).join('')||(ql?'<span class="hint">Nada encontrado.</span>':'')}
+$('nt-rx-q').addEventListener('input',e=>ntRxList(e.target.value));
+$('nt-rx-hits').addEventListener('click',e=>{const b=e.target.closest('[data-ntrx]');if(!b)return;const [m,n]=b.dataset.ntrx.split('|');const d=m==='a'?window.RXA:m==='p'?window.RXP:window.RXC;const c=d.find(x=>x.n===n);if(!c)return;const w=parseFloat($('nt-w').value)||null;
+  const which=$('nt-rx-what').value;let txt='';if(which==='casa'||which==='both')txt+=rxTextCasa(c,m==='p'?w:null);if(which==='ps'||which==='both')txt+=(txt?'\n':'')+rxTextPs(c,m==='p'?w:null);ntInsert(txt.trim(),/- Prescrição:|prescrição domiciliar|CONDUTA:/);$('nt-rx-q').value='';$('nt-rx-hits').innerHTML=''});
+$('nt-copy').onclick=async()=>{const ok=await copyText($('nt-text').value);ntFlash(ok?'Copiado ✓':'Não foi possível copiar')};
+$('nt-reset').onclick=()=>{$('nt-text').value=NT_TPL[NT.key].t;ntSave(NT.key,$('nt-text').value);ntCount();ntFlash('Modelo restaurado')};
+$('nt-clear').onclick=()=>{$('nt-text').value='';ntSave(NT.key,'');ntCount()};
+$('nt-date').onclick=()=>{const d=new Date();const p=n=>String(n).padStart(2,'0');ntInsert(`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`)};
+$('nt-next').onclick=()=>{const ta=$('nt-text');const from=ta.selectionEnd||0;let i=ta.value.indexOf('____',from);if(i<0)i=ta.value.indexOf('____');if(i<0){ntFlash('Sem campos pendentes');return}ta.focus();ta.setSelectionRange(i,i+4)};
+function ntFlash(m){const el=$('nt-flash');el.textContent=m;el.hidden=false;clearTimeout(ntFlash.t);ntFlash.t=setTimeout(()=>el.hidden=true,1800)}
+ntInit();
+
+</script>
+
+<script src="app-ai.js"></script>
+<script src="app-auth.js"></script>
+
+</body>
+</html>
