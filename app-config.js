@@ -14,7 +14,13 @@ window.APP_CFG = {
   supabaseUrl: '',
   supabaseAnonKey: '',
 
-  /* 2) ASSINATURA */
+  /* 2) QUEM PODE ENTRAR
+     'convite'    → só e-mails que VOCÊ marcar como autorizados na tabela
+                    profiles (coluna "autorizado") entram. Sem cobrança.
+     'assinatura' → teste grátis + pagamento (lojas/Mercado Pago). */
+  accessMode: 'convite',
+
+  /* 2) ASSINATURA (usada quando accessMode = 'assinatura') */
   plan: { name: 'MedKit Pro', price: 'R$ 29,90', period: 'mês', trialDays: 7 },
 
   /* 2a) Pagamento pela WEB (fora das lojas) — link de assinatura

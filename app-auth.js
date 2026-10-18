@@ -36,14 +36,16 @@ async function loadProfile(){try{const {data}=await sb.from('profiles').select('
 async function rcConfigure(){const rc=RC();if(!rc||rcReady)return;const key=platform()==='ios'?APP.revenuecat?.apple:APP.revenuecat?.google;if(!key)return;
   await rc.configure({apiKey:key,appUserID:user.id});rcReady=true}
 async function rcActive(){const rc=RC();if(!rc||!isNative())return false;try{await rcConfigure();if(!rcReady)return false;const {customerInfo}=await rc.getCustomerInfo();return !!customerInfo?.entitlements?.active?.[APP.revenuecat?.entitlement||'pro']}catch(e){return false}}
-async function checkAccess(){if(await rcActive())return {ok:true,src:'loja'};
+async function checkAccess(){
+  if(APP.accessMode==='convite'){return profile?.autorizado===true?{ok:true,src:'convite'}:{ok:false,src:'convite'}}
+  if(await rcActive())return {ok:true,src:'loja'};
   const now=Date.now();
   if(profile?.pago_ate&&new Date(profile.pago_ate)>now)return {ok:true,src:'pago',until:profile.pago_ate};
   if(profile?.trial_ate&&new Date(profile.trial_ate)>now)return {ok:true,src:'teste',until:profile.trial_ate};
   return {ok:false}}
 let acc={ok:false};
 async function afterLogin(){profile=await loadProfile();acc=await checkAccess();access=acc.ok;renderAccount();
-  if(access){unlock();const cur=document.querySelector('.screen.active')?.id;if(FREE.has(cur))_go('s-home')}else{$('pay-why').textContent=acc.src?'':(profile?.trial_ate?'Seu período de teste terminou. Continue com acesso a todos os módulos.':'Ative sua assinatura para usar o MedKit.');lock('s-pay')}}
+  if(access){unlock();const cur=document.querySelector('.screen.active')?.id;if(FREE.has(cur))_go('s-home')}else if(APP.accessMode==='convite'){lock('s-pay')}else{$('pay-why').textContent=acc.src?'':(profile?.trial_ate?'Seu período de teste terminou. Continue com acesso a todos os módulos.':'Ative sua assinatura para usar o MedKit.');lock('s-pay')}}
 
 /* ---- UI login ---- */
 let mode='in';
@@ -89,9 +91,9 @@ function renderAccount(){
   if(!authOn){$('ac-email').textContent='Modo demonstração — login não configurado';$('ac-plan').textContent='Demonstração';$('ac-status').textContent='Acesso livre';$('ac-until').textContent='—';
     ['ac-manage','ac-refresh','ac-logout','ac-delete'].forEach(i=>$(i).hidden=true);$('acct-lbl').textContent='Demo';return}
   $('ac-email').textContent=user?.email||'—';
-  $('ac-plan').textContent=acc.src==='loja'?(APP.plan?.name||'Pro')+' (loja)':acc.src==='pago'?(APP.plan?.name||'Pro'):acc.src==='teste'?'Teste gratuito':'Sem assinatura';
+  $('ac-plan').textContent=APP.accessMode==='convite'?(access?'Autorizado':'Aguardando autorização'):acc.src==='loja'?(APP.plan?.name||'Pro')+' (loja)':acc.src==='pago'?(APP.plan?.name||'Pro'):acc.src==='teste'?'Teste gratuito':'Sem assinatura';
   $('ac-status').textContent=access?'Ativa':'Inativa';$('ac-status').className='v '+(access?'ok':'bad');
-  $('ac-until').textContent=acc.src==='loja'?'Gerenciado pela loja':fmtDate(acc.until);
+  $('ac-until').textContent=APP.accessMode==='convite'?'—':acc.src==='loja'?'Gerenciado pela loja':fmtDate(acc.until);
   $('acct-lbl').textContent=access?(acc.src==='teste'?'Teste':'Pro'):'Conta'}
 $('ac-refresh').onclick=async()=>{if(user)await afterLogin()};
 $('ac-manage').onclick=()=>{const p=platform();const u=p==='ios'?'https://apps.apple.com/account/subscriptions':p==='android'?'https://play.google.com/store/account/subscriptions':(APP.checkoutUrl||'');if(u)window.open(u,'_blank');else go('s-pay')};
@@ -101,7 +103,7 @@ $('ac-support').onclick=()=>{const s=APP.supportEmail;if(!s)return alert('E-mail
 $('ac-delete').onclick=()=>{if(!confirm('Pedir a exclusão da conta e de todos os dados? Você perderá o acesso à assinatura.'))return;const s=APP.supportEmail||'';location.href=`mailto:${s}?subject=${encodeURIComponent('Excluir minha conta MedKit')}&body=${encodeURIComponent('Solicito a exclusão da conta '+(user?.email||'')+' e dos dados associados.')}`};
 
 /* ---- textos de plano ---- */
-function fillPlan(){const p=APP.plan||{};$('pay-plan').textContent=p.name||'MedKit Pro';$('pay-price').textContent=p.price||'';$('pay-period').textContent=p.period||'mês';$('au-trial').textContent=p.trialDays??7}
+function fillPlan(){if(APP.accessMode==='convite'){$('pay-plan').textContent='MedKit';document.querySelector('#s-pay .auth-title').textContent='Acesso restrito';$('pay-why').textContent='Sua conta foi criada, mas ainda não está autorizada. Peça a liberação ao responsável pelo app e depois toque em "Já fui autorizado".';document.querySelector('#s-pay .pay-card').innerHTML='<div class="actions"><button class="btn primary" id="pay-refresh" style="flex:1">Já fui autorizado — atualizar</button></div><p class="hint" id="pay-msg"></p>';$('pay-refresh').onclick=async()=>{msg('pay-msg','Verificando…');await afterLogin();if(!access)msg('pay-msg','Ainda não autorizado.',1)};document.querySelectorAll('.au-up .hint, #au-trial').forEach(()=>{});const t=document.querySelector('#s-auth .au-up.hint');if(t)t.innerHTML='Ao criar a conta você aceita os <button class="link inline" data-go="s-legal">Termos de uso e a Política de privacidade</button>. O acesso é liberado pelo responsável após o cadastro.';return}const p=APP.plan||{};$('pay-plan').textContent=p.name||'MedKit Pro';$('pay-price').textContent=p.price||'';$('pay-period').textContent=p.period||'mês';$('au-trial').textContent=p.trialDays??7}
 
 /* ---- início ---- */
 (async()=>{fillPlan();renderAccount();
