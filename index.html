@@ -242,6 +242,7 @@ body.locked .tabnav{display:none}
 .ai-status{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:10px;padding:8px 10px;border-radius:10px;background:var(--bg)}
 .ai-status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bad);flex:none}.ai-status.ok::before{background:var(--ok)}
 .thumbs .pdf{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:10px;background:var(--bad-soft);color:var(--bad);font-weight:700;font-size:.8rem}
+.rx-prep{font-size:.76rem;line-height:1.4;color:var(--muted);margin:4px 0 2px;padding:6px 8px;border-left:3px solid var(--accent-soft);background:var(--bg);border-radius:0 8px 8px 0}.rx-prep div+div{margin-top:4px}
 </style>
 </head>
 <body>
@@ -830,6 +831,7 @@ body.locked .tabnav{display:none}
 <script src="rx-amb-quick.js"></script>
 <script src="rx-cad.js"></script>
 <script src="rx-k.js"></script>
+<script src="rx-prep.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>{const v=parseFloat($(id).value);return isNaN(v)?null:v};
@@ -1420,8 +1422,8 @@ const RX_1ST={'Otite média aguda (criança)':['Amoxicilina {{d;45;80;2000;mL}} 
 function drawRx(){const c=rxData()[rxCur];if(!c)return;const w=RX.mode==='p'?RX.w:null;const body=$('rxo-body');
   const pesoNote=RX.mode==='p'?(w?`<p class="hint">Doses calculadas para <b>${f(w,1)} kg</b> — valores destacados. Confira a concentração do produto em mãos.</p>`:`<p class="hint" style="color:var(--warn)">Informe o peso acima para calcular as doses (por enquanto exibidas em mg/kg).</p>`):'';
   if(rxTab==='ps'){const q=(window.RXQ||{})[c.n];const {rx}=rxSplit(c);let n=0;
-    const full=`${rx.map(g=>`<div class="rx-via">${esc(g.v)}</div><ol class="rxol" start="${n+1}">${g.i.map(x=>{n++;return `<li>${tok(esc(x),w)}</li>`}).join('')}</ol>`).join('')}`;
-    body.innerHTML=pesoNote+(q?`<div class="panel card-r"><p class="sec">${RX.mode==='c'?'Conduta resumida':'Prescrição rápida — 1ª linha'}</p><ol class="rxol rxq">${q.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ol></div><details class="panel rxmore"><summary>${RX.mode==='c'?'Conduta detalhada':'Outras opções e alternativas'}</summary>${full}</details>`:`<div class="panel card-r"><p class="sec">Prescrição — pronto-socorro</p>${full}</div>`)+`<div class="actions"><button class="btn primary" id="rx-copy-ps">${RX.mode==='c'?'Copiar conduta':'Copiar prescrição do PS'}</button><button class="btn" data-rxgo="exp">Ver explicações ›</button></div>`;
+    const full=`${rx.map(g=>`<div class="rx-via">${esc(g.v)}</div><ol class="rxol" start="${n+1}">${g.i.map(x=>{n++;return `<li>${tok(esc(x),w)}${rxPrepHtml(x,w)}</li>`}).join('')}</ol>`).join('')}`;
+    body.innerHTML=pesoNote+(q?`<div class="panel card-r"><p class="sec">${RX.mode==='c'?'Conduta resumida':'Prescrição rápida — 1ª linha'}</p><ol class="rxol rxq">${q.map(x=>`<li>${tok(esc(x),w)}${rxPrepHtml(x,w)}</li>`).join('')}</ol></div><details class="panel rxmore"><summary>${RX.mode==='c'?'Conduta detalhada':'Outras opções e alternativas'}</summary>${full}</details>`:`<div class="panel card-r"><p class="sec">Prescrição — pronto-socorro</p>${full}</div>`)+`<div class="actions"><button class="btn primary" id="rx-copy-ps">${RX.mode==='c'?'Copiar conduta':'Copiar prescrição do PS'}</button><button class="btn" data-rxgo="exp">Ver explicações ›</button></div>`;
     $('rx-copy-ps').onclick=()=>rxCopy(rxTextPs(c,w),$('rx-copy-ps'))}
   else if(rxTab==='exp'){const {ex}=rxSplit(c);body.innerHTML=`<div class="panel card-y"><p class="sec">Avaliação, critérios e conduta</p>${ex.length?ex.map(g=>`<div class="rx-via">${esc(g.v)}</div><ul class="rxul">${g.i.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul>`).join(''):'<p class="hint">Sem observações adicionais.</p>'}</div><div class="panel card-b"><p class="sec">Prescrição comentada (texto completo)</p><ol class="rxol">${c.ps.flatMap(g=>g.i).filter(rxIs).map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ol></div><p class="note"><b>Evidência:</b> ${esc(c.ref)}</p>`}
   else if(rxTab==='casa'){let n=0;body.innerHTML=pesoNote+`<div class="panel card-g"><p class="sec">Receituário</p><div class="rx-paper">${c.casa.map(g=>`<div class="rx-via">${esc(g.v)}</div>`+g.i.map(([a,b,d])=>{n++;return `<div class="rx-it"><div class="rx-l1"><span class="rx-n">${n}.</span><span class="rx-drug">${tok(esc(a),w)}</span><span class="rx-dots"></span><span class="rx-qty">${tok(esc(b),w)}</span></div><div class="rx-pos">${tok(esc(d),w)}</div></div>`}).join('')).join('')}</div><div class="actions"><button class="btn primary" id="rx-copy-casa">Copiar receituário</button><button class="btn" data-ntadd="casa">Inserir no esqueleto ›</button></div></div>`;
@@ -1429,7 +1431,10 @@ function drawRx(){const c=rxData()[rxCur];if(!c)return;const w=RX.mode==='p'?RX.
   else{body.innerHTML=`<div class="panel card-b"><p class="sec">Orientações ao paciente</p><ul class="rxul">${c.ori.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul></div><div class="panel card-r"><p class="sec">Sinais de alarme — retornar imediatamente</p><ul class="rxul">${c.al.map(x=>`<li>${tok(esc(x),w)}</li>`).join('')}</ul></div><p class="note"><b>Evidência:</b> ${esc(c.ref)}</p><div class="actions"><button class="btn" id="rx-copy-ori">Copiar orientações</button></div>`;
     $('rx-copy-ori').onclick=()=>rxCopy(rxTextOri(c,w),$('rx-copy-ori'))}}
 const rxHead=(c,w)=>`${c.n.toUpperCase()} (CID ${c.cid})\nPaciente: ______________________________  ${w?'Peso: '+f(w,1)+' kg  ':''}Data: ___/___/______\n`;
-function rxTextPs(c,w){let n=0;const q=(window.RXQ||{})[c.n];const H=RX.mode==='c'?'CONDUTA — AMBULATÓRIO\n':'PRESCRIÇÃO — PRONTO-SOCORRO\n';if(q)return H+rxHead(c,w)+'\n'+q.map(x=>`${++n}. ${tokPlain(x,w)}`).join('\n')+'\n';const {rx}=rxSplit(c);return H+rxHead(c,w)+'\n'+rx.map(g=>g.v.toUpperCase()+'\n'+g.i.map(x=>`${++n}. ${tokPlain(x,w)}`).join('\n')).join('\n\n')+'\n'}
+function rxTextPs(c,w){let n=0;const q=(window.RXQ||{})[c.n];const H=RX.mode==='c'?'CONDUTA — AMBULATÓRIO\n':'PRESCRIÇÃO — PRONTO-SOCORRO\n';if(q)return H+rxHead(c,w)+'\n'+q.map(x=>`${++n}. ${tokPlain(x,w)}${rxPrepTxt(x,w)}`).join('\n')+'\n';const {rx}=rxSplit(c);return H+rxHead(c,w)+'\n'+rx.map(g=>g.v.toUpperCase()+'\n'+g.i.map(x=>`${++n}. ${tokPlain(x,w)}${rxPrepTxt(x,w)}`).join('\n')).join('\n\n')+'\n'}
+function rxPrepList(x,w){if(RX.mode==='c'||!window.rxPrep)return [];try{return rxPrep(tokPlain(x,w))}catch(e){return []}}
+function rxPrepHtml(x,w){const p=rxPrepList(x,w);return p.length?`<div class="rx-prep">${p.map(t=>'<div>💉 '+esc(t)+'</div>').join('')}</div>`:''}
+function rxPrepTxt(x,w){const p=rxPrepList(x,w);return p.length?'\n'+p.map(t=>'   ↳ '+t).join('\n'):''}
 function rxTextCasa(c,w){let n=0;return 'RECEITUÁRIO\n'+rxHead(c,w)+'\n'+c.casa.map(g=>g.v.toUpperCase()+'\n'+g.i.map(([a,b,d])=>{const A=tokPlain(a,w),B=tokPlain(b,w),D=tokPlain(d,w);const dots='-'.repeat(Math.max(3,56-A.length-B.length));return `${++n}. ${A} ${dots} ${B}\n   ${D}.`}).join('\n')).join('\n\n')+'\n\n'+'ORIENTAÇÕES\n'+c.ori.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\nSINAIS DE ALARME — retornar imediatamente\n'+c.al.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\n_______________________________\nAssinatura e carimbo (CRM)\n'}
 function rxTextOri(c,w){return `ORIENTAÇÕES — ${c.n}\n`+c.ori.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n\nSINAIS DE ALARME — procurar atendimento imediatamente\n'+c.al.map(x=>'• '+tokPlain(x,w)).join('\n')+'\n'}
 async function rxCopy(t,btn){const ok=await copyText(t);const o=btn.textContent;btn.textContent=ok?'Copiado ✓':'Não foi possível copiar';setTimeout(()=>btn.textContent=o,1800)}
