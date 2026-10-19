@@ -2,7 +2,7 @@
 window.RXQ={
 /* ===== ADULTO ===== */
 'Dor abdominal + vômitos + diarreia (adulto)':['SF 0,9% 1.000 mL EV em 1–2 h (se desidratado)','Ondansetrona 8 mg IM ou EV','Dipirona 1 g IM ou EV','Butilescopolamina 20 mg IM ou EV (ou Buscopan composto® 5 mL IM/EV) se cólica'],
-'Cefaleia + vômitos (cefaleia aguda com náuseas/vômitos)':['SORO ÚNICO (opção prática): SF 0,9% 100 mL + dipirona 1 g (1 amp 2 mL) + metoclopramida 10 mg (1 amp 2 mL) + dexametasona 10 mg (1 amp 2,5 mL) — EV em 15–20 min','Cetoprofeno 100 mg — em OUTRO SF 0,9% 100 mL, EV em 20–30 min (frasco exclusivo; não misturar), ou IM; opcional se dipirona bastar','Alternativa ao soro: metoclopramida 10 mg IM + dipirona 1 g IM + dexametasona 10 mg IM','Se ondansetrona 8 mg em vez de metoclopramida: pode entrar no mesmo soro'],
+'Cefaleia + vômitos (cefaleia aguda com náuseas/vômitos)':['Metoclopramida 10 mg IM ou EV (diluída em 100 mL SF, 15 min)','Dipirona 1 g IM ou EV','Cetoprofeno 100 mg IM ou EV (ou diclofenaco 75 mg IM)','Dexametasona 10 mg IM ou EV (↓ recorrência) — se sem alarme'],
 'Síndrome gripal (influenza)':['Dipirona 1 g IM ou EV (ou VO)','Oseltamivir 75 mg VO (se risco/SRAG)','SF 0,9% 500 mL EV só se desidratado'],
 'Resfriado comum':['Dipirona 1 g VO ou IM','Lavagem nasal com SF 0,9%'],
 'Pneumonia comunitária ambulatorial':['Amoxicilina 1 g VO — 1ª dose (ou ceftriaxona 1 g IM se vômitos)','Dipirona 1 g IM ou EV','O₂ se SatO₂ < 92% → internar'],
