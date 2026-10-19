@@ -15,6 +15,43 @@ const platform=()=>window.Capacitor?.getPlatform?window.Capacitor.getPlatform():
 const RC=()=>window.Capacitor?.Plugins?.Purchases||null;
 const fmtDate=d=>d?new Date(d).toLocaleDateString('pt-BR'):'—';
 
+
+/* ---- modo 'senha': login fixo, sem cadastro ---- */
+if(APP.accessMode==='senha'){
+  const SESS='mek-sess';
+  const sha=async t=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+  const cur=()=>{try{return localStorage.getItem(SESS)||''}catch(e){return ''}};
+  const FREE2=new Set(['s-auth','s-legal']);
+  const _go2=window.go;
+  window.go=function(id){if(document.body.classList.contains('locked')&&!FREE2.has(id))id='s-auth';_go2(id)};
+  const lockP=()=>{document.body.classList.add('locked');_go2('s-auth')};
+  const unlockP=()=>{document.body.classList.remove('locked')};
+  // UI: sem "Criar conta", sem "esqueci", campos Login/Senha
+  $('au-seg').style.display='none';$('au-forgot').style.display='none';$('au-demo').style.display='none';
+  document.querySelector('label[for=au-email]').textContent='Login';$('au-email').type='text';$('au-email').placeholder='';$('au-email').autocomplete='username';$('au-email').inputMode='text';
+  $('au-pass').placeholder='';$('au-pass').autocomplete='current-password';
+  document.querySelector('#s-auth .auth-sub').textContent='Acesso restrito. Informe o login e a senha fornecidos.';
+  const msgP=(t,bad)=>{$('au-msg').textContent=t;$('au-msg').style.color=bad?'var(--bad)':''};
+  $('au-go').onclick=async()=>{const u=$('au-email').value.trim(),p=$('au-pass').value;if(!u||!p)return msgP('Informe login e senha.',1);
+    $('au-go').disabled=true;try{const h=await sha(u+':'+p);const ok=(APP.logins||[]).some(l=>l.u===u&&l.h===h);
+      if(!ok){msgP('Login ou senha incorretos.',1);return}
+      try{localStorage.setItem(SESS,u)}catch(e){}$('au-pass').value='';msgP('');unlockP();_go2('s-home');renderAcc()}
+    finally{$('au-go').disabled=false}};
+  $('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('au-go').click()});
+  $('legal-back').onclick=()=>go(document.body.classList.contains('locked')?'s-auth':'s-home');
+  const sair=()=>{try{localStorage.removeItem(SESS)}catch(e){}lockP()};
+  function renderAcc(){$('ac-email').textContent=cur()?'Login: '+cur():'—';$('ac-plan').textContent='Acesso por login';$('ac-status').textContent='Ativo';$('ac-until').textContent='—';
+    ['ac-manage','ac-refresh','ac-delete'].forEach(i=>$(i).hidden=true);$('ac-logout').hidden=false;$('ac-logout').onclick=sair;$('acct-lbl').textContent=cur()||'Conta';
+    $('ac-ver').textContent=APP.version||'—';$('legal-contact').textContent='Suporte: '+(APP.supportEmail||'—');$('ac-ai-status').textContent='Provedor: '+(window.aiProviderLabel?aiProviderLabel():'—');$('ac-key-wrap').hidden=APP.allowOwnKey===false;$('ac-key').value=window.aiHasKey&&aiHasKey()?'••••••••••••':''}
+  $('ac-key-save').onclick=()=>{const k=$('ac-key').value.trim();if(!k||k.startsWith('•'))return;window.aiSaveKey&&aiSaveKey(k);renderAcc();alert('Chave salva neste aparelho.')};
+  $('ac-key-del').onclick=()=>{window.aiSaveKey&&aiSaveKey('');renderAcc()};
+  $('ac-support').onclick=()=>{const s=APP.supportEmail;if(!s)return alert('E-mail de suporte não configurado.');location.href=`mailto:${s}?subject=${encodeURIComponent('Suporte MedKit')}`};
+  renderAcc();
+  if(cur()&&(APP.logins||[]).some(l=>l.u===cur()))unlockP();else lockP();
+  if('serviceWorker' in navigator&&location.protocol==='https:'&&!window.claude&&window.top===window){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+  return;
+}
+
 /* ---- navegação bloqueada ---- */
 const _go=window.go;
 window.go=function(id){const cur=document.querySelector('.screen.active')?.id;

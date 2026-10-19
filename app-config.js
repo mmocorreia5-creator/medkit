@@ -17,8 +17,16 @@ window.APP_CFG = {
   /* 2) QUEM PODE ENTRAR
      'convite'    → só e-mails que VOCÊ marcar como autorizados na tabela
                     profiles (coluna "autorizado") entram. Sem cobrança.
-     'assinatura' → teste grátis + pagamento (lojas/Mercado Pago). */
-  accessMode: 'convite',
+     'assinatura' → teste grátis + pagamento (lojas/Mercado Pago).
+     'senha'      → login e senha fixos (lista abaixo), sem cadastro. */
+  accessMode: 'senha',
+
+  /* Modo 'senha': login e senha fixos, sem cadastro. Só entra quem souber.
+     Para trocar/adicionar, peça ao Claude um novo "hash" (a senha não fica
+     escrita aqui). Vários logins podem coexistir. */
+  logins: [
+    { u: '001', h: 'e990a7ecb0e36c723c9403fec9a6da770f66b5160eb975ea0e1f06dec8de9abe' }
+  ],
 
   /* 2) ASSINATURA (usada quando accessMode = 'assinatura') */
   plan: { name: 'MedKit Pro', price: 'R$ 29,90', period: 'mês', trialDays: 7 },
