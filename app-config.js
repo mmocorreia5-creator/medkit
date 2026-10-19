@@ -11,8 +11,8 @@ window.APP_CFG = {
   /* 1) LOGIN (Supabase — plano gratuito serve)
      supabase.com → New project → Settings → API:
      copie "Project URL" e "anon public" key. */
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://musixhvqxyuwziyywzqe.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11c2l4aHZxeHl1d3ppeXl3enFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNjUzMTYsImV4cCI6MjEwNzk0MTMxNn0.cbn48dKG52FwOctuGrEs86HWLkEnhxAPsHiPf36ccGg',
 
   /* 2) QUEM PODE ENTRAR
      'convite'    → só e-mails que VOCÊ marcar como autorizados na tabela
@@ -46,5 +46,5 @@ window.APP_CFG = {
   /* 4) Links exigidos pelas lojas */
   privacyUrl: '',
   termsUrl: '',
-  supportEmail: ''
+  supportEmail: 'mmocorreia5@gmail.com'
 };
